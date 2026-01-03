@@ -1,0 +1,3 @@
+<llvm-core/mlir-22 ~amd64
+<llvm-runtimes/flang-rt-22 ~amd64
+<llvm-core/flang-22 ~amd64

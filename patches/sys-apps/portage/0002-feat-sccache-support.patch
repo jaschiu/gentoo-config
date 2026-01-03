@@ -1,0 +1,120 @@
+From de94dd15979cca6bebf36d88b6d505dca6edfca4 Mon Sep 17 00:00:00 2001
+From: Jason Chiu <general@jasonchiu.slmail.me>
+Date: Mon, 1 Sep 2025 19:25:49 -0700
+Subject: [PATCH 2/3] feat: sccache support
+
+---
+ bin/ebuild.sh                                   |  7 ++++++-
+ bin/save-ebuild-env.sh                          |  4 ++--
+ lib/_emerge/EbuildPhase.py                      |  1 +
+ lib/_emerge/actions.py                          | 17 +++++++++++++++++
+ lib/portage/const.py                            |  1 +
+ .../package/ebuild/prepare_build_dirs.py        |  5 +++++
+ 6 files changed, 32 insertions(+), 3 deletions(-)
+
+diff --git a/bin/ebuild.sh b/bin/ebuild.sh
+index f2cc685..1d75689 100755
+--- a/bin/ebuild.sh
++++ b/bin/ebuild.sh
+@@ -709,9 +709,14 @@ if ! has "${EBUILD_PHASE}" clean cleanrm ; then
+ 					addread "${CCACHE_DIR}"
+ 					addwrite "${CCACHE_DIR}"
+ 				fi
+-
+ 				[[ -n ${CCACHE_SIZE} ]] && ccache -M ${CCACHE_SIZE} &> /dev/null
+ 			fi
++			if has sccache ${FEATURES} ; then
++				if [[ -n ${SCCACHE_DIR} ]] ; then
++					addread "${SCCACHE_DIR}"
++					addwrite "${SCCACHE_DIR}"
++				fi
++			fi
+ 		fi
+ 	fi
+ fi
+diff --git a/bin/save-ebuild-env.sh b/bin/save-ebuild-env.sh
+index 25f885f..5092ad6 100644
+--- a/bin/save-ebuild-env.sh
++++ b/bin/save-ebuild-env.sh
+@@ -162,8 +162,9 @@
+ 		INSTALL_MASK
+ 		PKG_INSTALL_MASK
+
+-		# CCACHE and DISTCC configuration variables.
++		# CCACHE and SCCACHE and DISTCC configuration variables.
+ 		"${!CCACHE_@}"
++		"${!SCCACHE_@}"
+ 		"${!DISTCC_@}"
+ 	)
+
+diff --git a/lib/_emerge/EbuildPhase.py b/lib/_emerge/EbuildPhase.py
+index 9e5268f..6a40d4c 100644
+--- a/lib/_emerge/EbuildPhase.py
++++ b/lib/_emerge/EbuildPhase.py
+@@ -139,6 +139,7 @@ class EbuildPhase(CompositeTask):
+         "nostrip",
+         "preserve-libs",
+         "sandbox",
++        "sccache",
+         "selinux",
+         "sesandbox",
+         "splitdebug",
+diff --git a/lib/_emerge/actions.py b/lib/_emerge/actions.py
+index 88770b6..a02422b 100644
+--- a/lib/_emerge/actions.py
++++ b/lib/_emerge/actions.py
+@@ -2078,6 +2078,23 @@ def action_info(settings, trees, myopts, myfiles):
+             ccache_str += " [disabled]"
+         append(ccache_str)
+ 
++    try:
++        proc = subprocess.Popen(
++            ["sccache", "-V"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
++        )
++    except OSError:
++        output = (1, None)
++    else:
++        output = _unicode_decode(proc.communicate()[0]).rstrip("\n")
++        output = (proc.wait(), output)
++    if output[0] == os.EX_OK:
++        sccache_str = output[1].split("\n", 1)[0]
++        if "sccache" in settings.features:
++            sccache_str += " [enabled]"
++        else:
++            sccache_str += " [disabled]"
++        append(sccache_str)
++
+     myvars = [
+         "dev-build/autoconf",
+         "dev-build/automake",
+diff --git a/lib/portage/const.py b/lib/portage/const.py
+index 875b27f..fa23e3f 100644
+--- a/lib/portage/const.py
++++ b/lib/portage/const.py
+@@ -223,6 +223,7 @@ SUPPORTED_FEATURES = frozenset(
+         "python-trace",
+         "qa-unresolved-soname-deps",
+         "sandbox",
++        "sccache",
+         "selinux",
+         "sesandbox",
+         "sfperms",
+diff --git a/lib/portage/package/ebuild/prepare_build_dirs.py b/lib/portage/package/ebuild/prepare_build_dirs.py
+index b608a0a..ee46970 100644
+--- a/lib/portage/package/ebuild/prepare_build_dirs.py
++++ b/lib/portage/package/ebuild/prepare_build_dirs.py
+@@ -210,6 +210,11 @@ def _prepare_features_dirs(mysettings):
+             "default_dir": os.path.join(mysettings["PORTAGE_TMPDIR"], "ccache"),
+             "always_recurse": False,
+         },
++        "sccache": {
++            "basedir_var": "SCCACHE_DIR",
++            "default_dir": os.path.join(mysettings["PORTAGE_TMPDIR"], "sccache"),
++            "always_recurse": False,
++        },
+         "distcc": {
+             "basedir_var": "DISTCC_DIR",
+             "default_dir": os.path.join(mysettings["BUILD_PREFIX"], ".distcc"),
+-- 
+2.51.0
+

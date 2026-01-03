@@ -1,0 +1,77 @@
+From ebcd447c9b29420dab4dc3360cd9afd4e26a3a07 Mon Sep 17 00:00:00 2001
+From: Jason Chiu <general@jasonchiu.slmail.me>
+Date: Mon, 1 Sep 2025 19:19:32 -0700
+Subject: [PATCH 1/3] feat: usepkg-include
+
+---
+ lib/_emerge/depgraph.py | 15 +++++++++++++++
+ lib/_emerge/main.py     |  6 ++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/lib/_emerge/depgraph.py b/lib/_emerge/depgraph.py
+index ddef7bb..d64799f 100644
+--- a/lib/_emerge/depgraph.py
++++ b/lib/_emerge/depgraph.py
+@@ -209,6 +209,8 @@ class _frozen_depgraph_config:
+         self.reinstall_atoms = _wildcard_set(atoms)
+         atoms = " ".join(myopts.get("--usepkg-exclude", [])).split()
+         self.usepkg_exclude = _wildcard_set(atoms)
++        atoms = " ".join(myopts.get("--usepkg-include", [])).split()
++        self.usepkg_include = _wildcard_set(atoms)
+         atoms = " ".join(myopts.get("--useoldpkg-atoms", [])).split()
+         self.useoldpkg_atoms = _wildcard_set(atoms)
+         atoms = " ".join(myopts.get("--rebuild-exclude", [])).split()
+@@ -7600,6 +7602,7 @@ class depgraph:
+         )
+         reinstall_atoms = self._frozen_config.reinstall_atoms
+         usepkg_exclude = self._frozen_config.usepkg_exclude
++        usepkg_include = self._frozen_config.usepkg_include
+         useoldpkg_atoms = self._frozen_config.useoldpkg_atoms
+         matched_oldpkg = []
+         # Behavior of the "selective" parameter depends on
+@@ -7679,6 +7682,18 @@ class depgraph:
+                     ):
+                         break
+ 
++                    # If usepkg-include is specified, only use binary packages
++                    # for packages that match the include list
++                    if (
++                        built
++                        and not installed
++                        and usepkg_include
++                        and not usepkg_include.findAtomForPackage(
++                            pkg, modified_use=self._pkg_use_enabled(pkg)
++                        )
++                    ):
++                        break
++
+                     # We can choose not to install a live package from using binary
+                     # cache by disabling it with option --usepkg-exclude-live in the
+                     # emerge call.
+diff --git a/lib/_emerge/main.py b/lib/_emerge/main.py
+index 44e05c3..ed0f701 100644
+--- a/lib/_emerge/main.py
++++ b/lib/_emerge/main.py
+@@ -578,6 +578,11 @@ def parse_opts(tmpcmdline, silent=False):
+             + "Emerge will ignore matching binary packages. ",
+             "action": "append",
+         },
++        "--usepkg-include": {
++            "help": "A space separated list of package names or slot atoms. "
++            + "Emerge will only use binary packages for matching entries. ",
++            "action": "append",
++        },
+         "--onlydeps-with-ideps": {
+             "help": "modify interpretation of dependencies to include IDEPEND",
+             "choices": true_y_or_n,
+@@ -891,6 +896,7 @@ def parse_opts(tmpcmdline, silent=False):
+         (myoptions.rebuild_exclude, "rebuild-exclude"),
+         (myoptions.rebuild_ignore, "rebuild-ignore"),
+         (myoptions.usepkg_exclude, "usepkg-exclude"),
++        (myoptions.usepkg_include, "usepkg-include"),
+         (myoptions.useoldpkg_atoms, "useoldpkg-atoms"),
+     )
+     bad_options = (
+-- 
+2.51.0
+

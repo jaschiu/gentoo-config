@@ -1,0 +1,5 @@
+sys-devel/gcc fortran
+media-libs/opus custom-modes
+net-libs/libwebsockets peer-limits
+media-libs/aubio double-precision fftw
+media-sound/ardour jack pulseaudio

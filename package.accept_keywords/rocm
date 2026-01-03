@@ -1,0 +1,21 @@
+dev-util/rocminfo ~amd64
+dev-util/rocm-smi ~amd64
+
+dev-util/hipcc ~amd64
+dev-build/rocm-cmake ~amd64
+dev-libs/rocm-core ~amd64
+dev-libs/rocm-device-libs ~amd64
+dev-libs/roct-thunk-interface ~amd64
+dev-libs/rocr-runtime ~amd64
+dev-libs/rocm-comgr ~amd64
+dev-libs/rocdbgapi ~amd64
+
+dev-util/hip ~amd64
+dev-util/Tensile ~amd64
+dev-util/roctracer ~amd64
+sci-libs/hipBLAS-common
+sci-libs/rocBLAS ~amd64
+sci-libs/rocSOLVER ~amd64
+sci-libs/rocSPARSE ~amd64
+sci-libs/rocPRIM ~amd64
+sci-libs/hipBLAS ~amd64

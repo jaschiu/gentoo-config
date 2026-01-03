@@ -1,0 +1,3 @@
+media-libs/libva X
+# For binhost compatibility
+dev-qt/qtwebengine alsa bindist pulseaudio -custom-cflags -vaapi

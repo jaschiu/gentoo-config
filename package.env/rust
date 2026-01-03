@@ -1,0 +1,36 @@
+app-antivirus/clamav lld-build.conf sccache.conf
+app-benchmarks/hyperfine lld-build.conf sccache.conf
+app-containers/aardvark-dns lld-build.conf sccache.conf
+app-containers/netavark lld-build.conf sccache.conf
+app-misc/anki lld-build.conf sccache.conf
+app-misc/jaq lld-build.conf sccache.conf
+app-misc/trashy lld-build.conf sccache.conf
+app-shells/mcfly lld-build.conf sccache.conf
+app-text/typst lld-build.conf sccache.conf
+dev-python/adblock lld-build.conf sccache.conf
+dev-python/bcrypt lld-build.conf sccache.conf
+dev-python/cryptography lld-build.conf sccache.conf
+dev-python/pydantic-core lld-build.conf sccache.conf
+dev-python/rfc3161-client lld-build.conf sccache.conf
+dev-python/rpds-py lld-build.conf sccache.conf
+dev-python/setuptools-rust lld-build.conf sccache.conf
+dev-python/uv lld-build.conf sccache.conf
+dev-util/bindgen lld-build.conf sccache.conf
+dev-util/cargo-c lld-build.conf sccache.conf
+dev-util/cbindgen lld-build.conf sccache.conf
+dev-util/difftastic lld-build.conf sccache.conf
+dev-util/maturin lld-build.conf sccache.conf
+gnome-base/librsvg lld-build.conf sccache.conf
+gui-apps/tuigreet lld-build.conf sccache.conf
+gui-apps/wleave lld-build.conf sccache.conf
+gui-apps/wlgreet lld-build.conf sccache.conf
+gui-libs/greetd lld-build.conf sccache.conf
+llvm-runtimes/compiler-rt-sanitizers lld-build.conf
+media-libs/mesa lld-build.conf sccache.conf
+sys-apps/amdgpu_top lld-build.conf sccache.conf
+sys-apps/bat lld-build.conf sccache.conf
+sys-apps/fd lld-build.conf
+sys-apps/lsd lld-build.conf sccache.conf
+sys-apps/ripgrep lld-build.conf sccache.conf
+www-client/firefox lld-build.conf sccache.conf
+www-client/librewolf sccache.conf

@@ -1,0 +1,7 @@
+sys-devel/gcc gcc.conf
+
+media-gfx/argyllcms gcc.conf  # intermediate generator binary segfaults on clang
+sys-libs/glibc gcc.conf  # forces gcc :(
+
+# Fortran
+# sci-libs/lapack gcc.conf

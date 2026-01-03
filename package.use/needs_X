@@ -1,0 +1,9 @@
+>=x11-libs/cairo-1.18 X
+>=dev-python/pycairo-1.27.0-r1 X
+>=dev-cpp/cairomm-1.14 X
+>=media-libs/libepoxy-1.5 X
+>=media-libs/libglvnd-1.7 X
+>=media-libs/mesa-24.2 X
+>=x11-libs/gtk+-3.24 X
+>=dev-cpp/gtkmm-3.24 X
+>=x11-libs/pango-1.52.2 X

@@ -1,0 +1,3 @@
+gui-libs/gtk:4 ~amd64
+=gui-libs/libadwaita-1.7* ~amd64
+gui-apps/wleave ~amd64

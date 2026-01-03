@@ -1,0 +1,106 @@
+diff --git a/hyprpm/CMakeLists.txt b/hyprpm/CMakeLists.txt
+index d744ac1..28d3f2c 100644
+--- a/hyprpm/CMakeLists.txt
++++ b/hyprpm/CMakeLists.txt
+@@ -9,7 +9,7 @@ file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp")
+ 
+ set(CMAKE_CXX_STANDARD 23)
+ 
+-pkg_check_modules(hyprpm_deps REQUIRED IMPORTED_TARGET tomlplusplus hyprutils>=0.7.0)
++pkg_check_modules(hyprpm_deps REQUIRED IMPORTED_TARGET re2 tomlplusplus hyprutils>=0.7.0)
+ 
+ find_package(glaze QUIET)
+ if (NOT glaze_FOUND)
+diff --git a/hyprpm/src/core/PluginManager.cpp b/hyprpm/src/core/PluginManager.cpp
+index 3343cbe..873c5d3 100644
+--- a/hyprpm/src/core/PluginManager.cpp
++++ b/hyprpm/src/core/PluginManager.cpp
+@@ -12,12 +12,15 @@
+ #include <fstream>
+ #include <algorithm>
+ #include <format>
++#include <unordered_map>
++#include <type_traits>
+ 
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <pwd.h>
+ #include <unistd.h>
+ 
++#include <re2/re2.h>
+ #include <toml++/toml.hpp>
+ #include <glaze/glaze.hpp>
+ 
+@@ -26,16 +29,25 @@
+ using namespace Hyprutils::String;
+ using namespace Hyprutils::OS;
+ 
+-static std::string execAndGet(std::string cmd) {
++
++
++template<typename C, typename = std::enable_if_t<
++    std::is_same_v<typename C::value_type, std::pair<const std::string, std::string>>>
++> static std::string execAndGet(std::string cmd, C const &env_vars) {
+     cmd += " 2>&1";
+ 
+     CProcess proc("/bin/sh", {"-c", cmd});
++    for (const auto &[k, v] : env_vars)
++        proc.addEnv(k, v);
+ 
+     if (!proc.runSync())
+         return "error";
+ 
+     return proc.stdOut();
+ }
++static inline std::string execAndGet(std::string cmd) {
++    return execAndGet(cmd, std::vector<std::pair<const std::string, std::string> >());
++}
+ 
+ static std::string getTempRoot() {
+     static auto ENV = getenv("XDG_RUNTIME_DIR");
+@@ -278,6 +290,24 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
+ 
+     progress.m_iSteps = 3;
+     progress.printMessageAbove(successString("Hyprland headers OK"));
++
++    static const char *env_file = "/etc/portage/make.conf";
++    std::unordered_map<std::string, std::string> vars;
++    if (std::filesystem::is_regular_file(std::filesystem::path(env_file))) {
++        progress.printMessageAbove(infoString("Reading {}", env_file));
++        CProcess proc("/bin/bash", {"-ex", env_file});
++        if (!proc.runSync()) {
++            std::println(stderr, "\n{}", failureString("Couldn't read {}", env_file));
++            return false;
++        }
++        re2::StringPiece input(proc.stdErr());
++        std::string name, quoted_value, value;
++        const RE2 re(R"((?m)^(?:\++ )?((?i:[a-z_]\w*))=(?:'((?s:.*?))'|((?:[!-&(-~].*)?))$)");
++        while (RE2::FindAndConsume(&input, re, &name, &quoted_value, &value))
++            if (!getenv(name.c_str()))
++                vars[name] = quoted_value.empty() ? value : quoted_value;
++    }
++
+     progress.m_szCurrentMessage = "Building plugin(s)";
+     progress.print();
+ 
+@@ -294,7 +324,7 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
+ 
+         for (auto const& bs : p.buildSteps) {
+             const std::string& cmd = std::format("cd {} && PKG_CONFIG_PATH=\"{}/share/pkgconfig\" {}", m_szWorkingPluginDirectory, DataState::getHeadersPath(), bs);
+-            out += " -> " + cmd + "\n" + execAndGet(cmd) + "\n";
++            out += " -> " + cmd + "\n" + execAndGet(cmd, vars) + "\n";
+         }
+ 
+         if (m_bVerbose)
+diff --git a/hyprpm/src/meson.build b/hyprpm/src/meson.build
+index fd914f9..946775e 100644
+--- a/hyprpm/src/meson.build
++++ b/hyprpm/src/meson.build
+@@ -8,6 +8,7 @@ executable(
+     dependency('hyprutils', version: '>= 0.1.1'),
+     dependency('threads'),
+     dependency('tomlplusplus'),
++    dependency('re2'),
+     dependency('glaze', method: 'cmake'),
+   ],
+   install: true,

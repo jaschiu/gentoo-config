@@ -1,0 +1,18 @@
+sys-libs/efivar lld-build.conf
+# media-libs/amdvlk lld-build.conf
+
+dev-lang/ruby lld-build.conf
+dev-lang/swift lld-build.conf
+dev-lang/zig lld-build.conf
+dev-util/perf lld-build.conf
+dev-util/sccache lld-build.conf
+dev-qt/qtcore lld-build.conf
+dev-ruby/* lld-build.conf
+gui-libs/gtk lld-build.conf
+media-libs/amdvlk lld-build.conf
+media-video/ffmpeg lld-build.conf
+sci-libs/flexiblas lld-build.conf
+sys-boot/gnu-efi lld-build.conf
+sys-kernel/dracut lld-build.conf
+sys-kernel/gentoo-kernel-bin lld-build.conf
+

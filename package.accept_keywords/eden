@@ -1,0 +1,12 @@
+dev-cpp/cpp-jwt ~amd64
+dev-cpp/simpleini ~amd64
+dev-libs/frozen ~amd64
+dev-libs/mcl ~amd64
+dev-libs/sirit ~amd64
+dev-libs/unordered_dense ~amd64
+dev-libs/xbyak ~amd64
+dev-libs/zycore-c ~amd64
+dev-libs/zydis ~amd64
+games-util/gamemode ~amd64
+media-libs/VulkanMemoryAllocator ~amd64
+games-emulation/eden ~amd64

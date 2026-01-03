@@ -1,0 +1,88 @@
+From d1fcf59f0ef1fbf5a9b2a4d1773c84decb0a582a Mon Sep 17 00:00:00 2001
+From: Jason Chiu <general@jasonchiu.slmail.me>
+Date: Mon, 1 Sep 2025 20:06:46 -0700
+Subject: [PATCH 3/3] feat: custom features
+
+---
+ lib/portage/const.py                          |  1 +
+ .../package/ebuild/_config/features_set.py    | 32 +++++++++++++++++--
+ 2 files changed, 30 insertions(+), 3 deletions(-)
+
+diff --git a/lib/portage/const.py b/lib/portage/const.py
+index fa23e3f..3fc1b7f 100644
+--- a/lib/portage/const.py
++++ b/lib/portage/const.py
+@@ -39,6 +39,7 @@ EBUILD_SH_ENV_FILE = f"{USER_CONFIG_PATH}/bashrc"
+ EBUILD_SH_ENV_DIR = f"{USER_CONFIG_PATH}/env"
+ CUSTOM_MIRRORS_FILE = f"{USER_CONFIG_PATH}/mirrors"
+ COLOR_MAP_FILE = f"{USER_CONFIG_PATH}/color.map"
++FEATURES_FILE = f"{USER_CONFIG_PATH}/features"
+ PROFILE_PATH = f"{USER_CONFIG_PATH}/make.profile"
+ MAKE_DEFAULTS_FILE = f"{PROFILE_PATH}/make.defaults"  # FIXME: not used
+ DEPRECATED_PROFILE_FILE = f"{PROFILE_PATH}/deprecated"
+diff --git a/lib/portage/package/ebuild/_config/features_set.py b/lib/portage/package/ebuild/_config/features_set.py
+index 0100d7e..bb97c64 100644
+--- a/lib/portage/package/ebuild/_config/features_set.py
++++ b/lib/portage/package/ebuild/_config/features_set.py
+@@ -4,8 +4,9 @@
+ __all__ = ("features_set",)
+ 
+ import logging
++import os
+ 
+-from portage.const import SUPPORTED_FEATURES
++from portage.const import SUPPORTED_FEATURES, FEATURES_FILE
+ from portage.localization import _
+ from portage.output import colorize
+ from portage.util import writemsg_level
+@@ -81,12 +82,37 @@ class features_set:
+             self._features.remove(k)
+             self._sync_env_var()
+ 
++    def _load_custom_features(self):
++        """Load custom features from config_root/etc/portage/features file."""
++        custom_features = set()
++        config_root = self._settings.get("PORTAGE_CONFIGROOT", "/")
++        features_file = os.path.join(config_root, FEATURES_FILE)
++        
++        try:
++            with open(features_file, 'r', encoding='utf-8') as f:
++                for line in f:
++                    line = line.strip()
++                    # Skip empty lines and comments
++                    if line and not line.startswith('#'):
++                        custom_features.add(line)
++        except (OSError, IOError):
++            # File doesn't exist or can't be read, that's fine
++            pass
++        
++        return custom_features
++
++    def _get_supported_features(self):
++        """Get supported features including custom ones from features file."""
++        return SUPPORTED_FEATURES | self._load_custom_features()
++
+     def _validate(self):
+         """
+         Implements unknown-features-warn and unknown-features-filter.
+         """
++        supported_features = self._get_supported_features()
++        
+         if "unknown-features-warn" in self._features:
+-            unknown_features = self._features.difference(SUPPORTED_FEATURES)
++            unknown_features = self._features.difference(supported_features)
+             if unknown_features:
+                 unknown_features = unknown_features.difference(
+                     self._settings._unknown_features
+@@ -105,7 +131,7 @@ class features_set:
+                     )
+ 
+         if "unknown-features-filter" in self._features:
+-            unknown_features = self._features.difference(SUPPORTED_FEATURES)
++            unknown_features = self._features.difference(supported_features)
+             if unknown_features:
+                 self.difference_update(unknown_features)
+                 self._prune_overrides()
+-- 
+2.51.0
+

@@ -1,0 +1,13 @@
+app-office/libreoffice parallel-lto.conf
+dev-lang/nim parallel-lto.conf
+dev-python/pyqt5 parallel-lto.conf
+dev-python/pyqt6 parallel-lto.conf
+# dev-qt/qtwebengine parallel-lto.conf
+dev-util/DirectXShaderCompiler parallel-lto.conf
+games-emulation/eden parallel-lto.conf
+llvm-core/clang parallel-lto.conf
+sci-libs/rocBLAS parallel-lto.conf
+sci-libs/rocSPARSE parallel-lto.conf
+sci-ml/ollama parallel-lto.conf
+sys-devel/gcc parallel-lto.conf
+www-client/librewolf parallel-lto.conf

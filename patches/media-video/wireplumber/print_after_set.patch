@@ -1,0 +1,22 @@
+diff --git a/src/tools/wpctl.c b/src/tools/wpctl.c
+index 1c59d2a..ea4ec01 100644
+--- a/src/tools/wpctl.c
++++ b/src/tools/wpctl.c
+@@ -995,6 +995,8 @@ do_set_volume (WpCtl * self, WpPipewireObject *proxy)
+     return FALSE;
+   }
+ 
++  printf ("%d\n", (int)(cmdline.set_volume.volume * 100 + 0.5));
++
+   return TRUE;
+ }
+ 
+@@ -1109,6 +1111,8 @@ do_set_mute (WpCtl * self, WpPipewireObject *proxy)
+ 
+   g_signal_emit_by_name (mixer_api, "set-volume", id, variant, &res);
+ 
++  printf ("%s\n", mute ? "true" : "false");
++
+   return TRUE;
+ }
+ 

@@ -1,0 +1,2 @@
+sys-kernel/installkernel grub dracut
+sys-kernel/gentoo-kernel* modules-compress

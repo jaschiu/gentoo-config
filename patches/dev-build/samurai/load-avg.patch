@@ -1,0 +1,199 @@
+From 961929d95774c6e171d8b9e3f2751831570b72f7 Mon Sep 17 00:00:00 2001
+From: capezotte <carana2099@gmail.com>
+Date: Tue, 29 Mar 2022 15:38:10 -0300
+Subject: [PATCH] Implement load average option
+
+---
+ README.md |  4 ++++
+ build.c   | 30 +++++++++++++++++++++++++++---
+ build.h   |  1 +
+ samu.1    | 10 ++++++++--
+ samu.c    | 25 ++++++++++++++++++++++---
+ 5 files changed, 62 insertions(+), 8 deletions(-)
+
+diff --git a/README.md b/README.md
+index 5d79021..3850e3f 100644
+--- a/README.md
++++ b/README.md
+@@ -19,6 +19,10 @@ It is feature-complete and supports most of the same options as ninja.
+ 
+ samurai requires various POSIX.1-2008 interfaces.
+ 
++Scheduling jobs based on load average requires through the non-standard, but
++widely available `getloadavg` function. This feature can be disabled by
++defining the `NO_GETLOADAVG` macro when calling the C compiler.
++
+ ## Differences from ninja
+ 
+ samurai tries to match ninja behavior as much as possible, but there
+diff --git a/build.c b/build.c
+index 9738336..f6b48ff 100644
+--- a/build.c
++++ b/build.c
+@@ -1,4 +1,7 @@
+ #define _POSIX_C_SOURCE 200809L
++#ifndef NO_GETLOADAVG
++#define _BSD_SOURCE /* for getloadavg */
++#endif
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <inttypes.h>
+@@ -520,12 +523,30 @@ jobwork(struct job *j)
+ 	return false;
+ }
+ 
++/* queries the system load average */
++static double
++queryload(void)
++{
++#ifdef NO_GETLOADAVG
++	return 0;
++#else
++	double load;
++
++	if (getloadavg(&load, 1) == -1) {
++		warn("getloadavg:");
++		load = 100.0;
++	}
++
++	return load;
++#endif
++}
++
+ void
+ build(void)
+ {
+ 	struct job *jobs = NULL;
+ 	struct pollfd *fds = NULL;
+-	size_t i, next = 0, jobslen = 0, numjobs = 0, numfail = 0;
++	size_t i, next = 0, jobslen = 0, maxjobs = buildopts.maxjobs, numjobs = 0, numfail = 0;
+ 	struct edge *e;
+ 
+ 	if (ntotal == 0) {
+@@ -538,8 +559,11 @@ build(void)
+ 
+ 	nstarted = 0;
+ 	for (;;) {
++		/* limit number of of jobs based on load */
++		if (buildopts.maxload)
++			maxjobs = queryload() > buildopts.maxload ? 1 : buildopts.maxjobs;
+ 		/* start ready edges */
+-		while (work && numjobs < buildopts.maxjobs && numfail < buildopts.maxfail) {
++		while (work && numjobs < maxjobs && numfail < buildopts.maxfail) {
+ 			e = work;
+ 			work = work->worknext;
+ 			if (e->rule != &phonyrule && buildopts.dryrun) {
+@@ -578,7 +602,7 @@ build(void)
+ 		}
+ 		if (numjobs == 0)
+ 			break;
+-		if (poll(fds, jobslen, -1) < 0)
++		if (poll(fds, jobslen, 5000) < 0)
+ 			fatal("poll:");
+ 		for (i = 0; i < jobslen; ++i) {
+ 			if (!fds[i].revents || jobwork(&jobs[i]))
+diff --git a/build.h b/build.h
+index 7487a8e..47d6ea3 100644
+--- a/build.h
++++ b/build.h
+@@ -4,6 +4,7 @@ struct buildoptions {
+ 	size_t maxjobs, maxfail;
+ 	_Bool verbose, explain, keepdepfile, keeprsp, dryrun;
+ 	const char *statusfmt;
++	double maxload;
+ };
+ 
+ extern struct buildoptions buildopts;
+diff --git a/samu.1 b/samu.1
+index fc886aa..0661b3f 100644
+--- a/samu.1
++++ b/samu.1
+@@ -11,6 +11,7 @@
+ .Op Fl f Ar buildfile
+ .Op Fl j Ar maxjobs
+ .Op Fl k Ar maxfail
++.Op Fl l Ar maxload
+ .Op Fl w Ar warnflag=action
+ .Op Fl nv
+ .Op Ar target...
+@@ -163,6 +164,10 @@ Allow up to
+ .Ar maxfail
+ job failures.
+ If negative or zero, allow any number of job failures.
++.It Fl l
++Do not spawn new jobs if the system load percentage is greater than
++.Ar maxload .
++If zero, spawn jobs as soon as possible.
+ .It Fl n
+ Do not actually execute the commands or update the log.
+ .It Fl v
+@@ -217,9 +222,10 @@ that get applied before those specified on the command-line.
+ The only options allowed in
+ .Ev SAMUFLAGS
+ are
+-.Fl v
++.Fl v ,
++.Fl j
+ and
+-.Fl j .
++.Fl l .
+ .It Ev NINJA_STATUS
+ The status output printed to the left of each rule description, using printf-like conversion specifiers.
+ If unset, the default is "[%s/%t] ".
+diff --git a/samu.c b/samu.c
+index 6d23dcd..2a82a1b 100644
+--- a/samu.c
++++ b/samu.c
+@@ -20,7 +20,7 @@ const char *argv0;
+ static void
+ usage(void)
+ {
+-	fprintf(stderr, "usage: %s [-C dir] [-f buildfile] [-j maxjobs] [-k maxfail] [-n]\n", argv0);
++	fprintf(stderr, "usage: %s [-C dir] [-f buildfile] [-j maxjobs] [-k maxfail] [-l maxload] [-n]\n", argv0);
+ 	exit(2);
+ }
+ 
+@@ -50,6 +50,23 @@ debugflag(const char *flag)
+ 		fatal("unknown debug flag '%s'", flag);
+ }
+ 
++static void
++loadflag(const char *flag)
++{
++#ifdef NO_GETLOADAVG
++	warn("job scheduling based on load average is not implemented");
++#else
++	double value;
++	char *end;
++	errno = 0;
++
++	value = strtod(flag, &end);
++	if (*end || value < 0 || errno != 0)
++		fatal("invalid -l parameter");
++	buildopts.maxload = value;
++#endif
++}
++
+ static void
+ warnflag(const char *flag)
+ {
+@@ -100,6 +117,9 @@ parseenvargs(char *env)
+ 	case 'v':
+ 		buildopts.verbose = true;
+ 		break;
++	case 'l':
++		loadflag(EARGF(usage()));
++		break;
+ 	default:
+ 		fatal("invalid option in SAMUFLAGS");
+ 	} ARGEND
+@@ -163,8 +183,7 @@ main(int argc, char *argv[])
+ 		buildopts.maxfail = num > 0 ? num : -1;
+ 		break;
+ 	case 'l':
+-		warn("job scheduling based on load average is not implemented");
+-		EARGF(usage());
++		loadflag(EARGF(usage()));
+ 		break;
+ 	case 'n':
+ 		buildopts.dryrun = true;

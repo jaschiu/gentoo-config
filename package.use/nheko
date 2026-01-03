@@ -1,0 +1,6 @@
+dev-libs/qtkeychain keyring
+sys-libs/zlib minizip
+media-libs/gst-plugins-base ogg
+media-plugins/gst-plugins-meta ogg vpx v4l
+dev-qt/qtmultimedia gstreamer
+net-im/nheko video voip

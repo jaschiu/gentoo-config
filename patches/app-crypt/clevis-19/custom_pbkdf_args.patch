@@ -1,0 +1,22 @@
+diff --git a/src/luks/clevis-luks-common-functions.in b/src/luks/clevis-luks-common-functions.in
+index 98cc9bc..07e8268 100644
+--- a/src/luks/clevis-luks-common-functions.in
++++ b/src/luks/clevis-luks-common-functions.in
+@@ -786,7 +786,7 @@ clevis_luks_add_key() {
+         extra_args="$(printf -- '--token-id %s' "${EXISTING_TOKEN_ID}")"
+         input="$(printf '%s' "${NEWKEY}")"
+     fi
+-    local pbkdf_args="--pbkdf pbkdf2 --pbkdf-force-iterations 1000"
++    local pbkdf_args="-h sha512"
+
+     printf '%s' "${input}" | cryptsetup luksAddKey --force-password --batch-mode \
+                                         --key-slot "${SLT}" \
+@@ -826,7 +826,7 @@ clevis_luks_add_key() {
+         input="$(printf '%s' "${NEWKEY}")"
+     fi
+
+-    local pbkdf_args="--pbkdf pbkdf2 --pbkdf-force-iterations 1000"
++    local pbkdf_args="-h sha512"
+
+     if [ -n "${in_place}" ]; then
+         printf '%s' "${input}" | cryptsetup luksChangeKey "${DEV}" \

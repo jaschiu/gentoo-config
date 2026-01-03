@@ -1,0 +1,38 @@
+# media-libs/mesa nolto.conf
+# app-office/libreoffice nolto.conf
+# app-office/sc-im nolto.conf
+# dev-qt/qtdeclarative nolto.conf
+# dev-qt/qtwebengine nolto.conf
+# dev-util/DirectXShaderCompiler nolto.conf
+app-containers/aardvark-dns nolto.conf
+app-containers/netavark nolto.conf
+app-shells/mcfly nolto.conf
+app-text/typst nolto.conf
+app-misc/anki nolto.conf
+app-misc/jaq nolto.conf
+dev-util/bindgen nolto.conf
+dev-util/cargo-c nolto.conf
+dev-util/difftastic nolto.conf
+dev-util/dialog nolto.conf
+dev-util/maturin nolto.conf
+dev-util/sccache nolto.conf
+dev-python/adblock nolto.conf
+dev-python/bcrypt nolto.conf
+dev-python/cryptography nolto.conf
+dev-python/numpy nolto.conf
+dev-python/pydantic-core nolto.conf
+dev-python/rfc3161-client nolto.conf
+dev-python/rpds-py nolto.conf
+dev-python/scipy nolto.conf
+dev-python/uv nolto.conf
+dev-util/cbindgen nolto.conf
+gnome-base/librsvg nolto.conf
+gui-apps/wleave nolto.conf
+media-libs/mesa nolto.conf
+sci-libs/flexiblas nolto.conf
+sci-libs/openblas nolto.conf
+sys-apps/amdgpu_top nolto.conf
+sys-apps/fd nolto.conf
+sys-apps/lsd nolto.conf
+sys-apps/ripgrep nolto.conf
+# media-libs/amdvlk nolto.conf

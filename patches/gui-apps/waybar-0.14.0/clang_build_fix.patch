@@ -1,0 +1,22 @@
+From eee0362367be8a574b2e9fcd9faa7d594248527e Mon Sep 17 00:00:00 2001
+From: Jason Chiu <general@jasonchiu.slmail.me>
+Date: Wed, 17 Sep 2025 22:09:49 +0000
+Subject: [PATCH] Fix clang build error
+
+---
+ src/modules/clock.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/modules/clock.cpp b/src/modules/clock.cpp
+index a7d57437f..e4c48207a 100644
+--- a/src/modules/clock.cpp
++++ b/src/modules/clock.cpp
+@@ -375,7 +375,7 @@ auto waybar::modules::Clock::get_calendar(const year_month_day& today, const yea
+             }
+           }
+           os << Glib::ustring::format(
+-              (cldWPos_ != WS::LEFT || line == 0) ? std::left : std::right, std::setfill(L' '),
++              (cldWPos_ != WS::LEFT || line == 0) ? std::left : std::right, std::setfill(' '),
+               std::setw(cldMonColLen_ + ((line < 2) ? cldWnLen_ - wideCharCount : 0)),
+               calendarLine);
+ 

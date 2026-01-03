@@ -1,0 +1,6 @@
+dev-db/lmdb++ ~amd64
+dev-cpp/coeurl ~amd64
+dev-libs/mtxclient ~amd64
+dev-cpp/blurhash ~amd64
+media-plugins/gst-plugins-qt6 ~amd64
+net-im/nheko ~amd64

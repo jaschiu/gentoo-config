@@ -1,0 +1,11 @@
+--- a/bin/estrip
++++ b/bin/estrip
+@@ -141,7 +141,7 @@
+ 		else
+ 			objcopy_flags=( --only-keep-debug )
+ 			if (( has_feature[compressdebug] )); then
+-				objcopy_flags+=( --compress-debug-sections )
++				objcopy_flags+=( --compress-debug-sections=zstd )
+ 			fi
+ 			"${name_of[objcopy]}" "${objcopy_flags[@]}" "${src}" "${dst}" \
+ 			&& "${name_of[objcopy]}" --add-gnu-debuglink="${dst}" "${src}"

@@ -1,0 +1,3 @@
+dev-libs/appstream -qt6
+dev-util/ostree -soup
+sys-apps/flatpak X

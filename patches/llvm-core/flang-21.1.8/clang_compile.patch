@@ -1,0 +1,11 @@
+--- a/flang/include/flang/Common/erfc-scaled.h
++++ b/flang/include/flang/Common/erfc-scaled.h
+@@ -47,7 +47,7 @@
+   constexpr T one{1.0};
+   constexpr T four{4.0};
+   constexpr T sixteen{16.0};
+-  constexpr T xmax{1.0 / (sqrtpi * std::numeric_limits<T>::min())};
++  constexpr T xmax{static_cast<T>(1.0) / (sqrtpi * std::numeric_limits<T>::min())};
+   static_assert(xmax > xhuge, "xmax must be greater than xhuge");
+ 
+   T ysq;

@@ -1,0 +1,7 @@
+default-ld
+gcc
+no-lto
+no-polyhedra
+no-trappingmath
+parallel-lto
+

@@ -1,0 +1,3 @@
+dev-libs/hyprlang ~amd64
+gui-libs/hyprland-qt-support ~amd64
+sys-auth/hyprpolkitagent ~amd64

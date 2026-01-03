@@ -1,0 +1,12 @@
+diff --git a/src/libnm-core-impl/nm-settings-ip-config.c b/src/libnm-core-impl/nm-settings-ip-config.c
+index 02334b5435..4c8a9b267b 100644
+--- a/src/libnm-core-impl/nm-settings-ip-config.c
++++ b/src/libnm-core-impl/nm-settings-ip-config.c
+@@ -6647,7 +6647,7 @@ nm_setting_ip_config_class_init(NMSettingIPConfigClass *klass)
+         g_param_spec_boolean(NM_SETTING_IP_CONFIG_DHCP_SEND_HOSTNAME,
+                              "",
+                              "",
+-                             TRUE,
++                             FALSE,
+                              G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+     /**

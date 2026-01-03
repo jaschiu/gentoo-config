@@ -1,0 +1,3 @@
+>=media-libs/libvpx-1.14.1 postproc
+www-client/firefox openh264 pulseaudio system-pipewire wasm-sandbox
+www-client/librewolf openh264 pulseaudio system-pipewire wasm-sandbox

@@ -1,0 +1,3 @@
+dev-util/DirectXShaderCompiler ~amd64
+media-libs/amdvlk ~amd64
+media-libs/amdvlk-bin ~amd64

@@ -1,0 +1,3 @@
+app-crypt/clevis ~amd64
+dev-libs/jose ~amd64
+dev-libs/luksmeta ~amd64

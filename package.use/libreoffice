@@ -1,0 +1,4 @@
+# for binpkg compatibility
+# app-office/libreoffice pdfimport
+app-office/libreoffice -custom-cflags
+
