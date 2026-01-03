@@ -1,5 +1,5 @@
 diff --git a/hyprpm/CMakeLists.txt b/hyprpm/CMakeLists.txt
-index d744ac1..28d3f2c 100644
+index f2e0b22..6276900 100644
 --- a/hyprpm/CMakeLists.txt
 +++ b/hyprpm/CMakeLists.txt
 @@ -9,7 +9,7 @@ file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp")
@@ -12,10 +12,10 @@ index d744ac1..28d3f2c 100644
  find_package(glaze QUIET)
  if (NOT glaze_FOUND)
 diff --git a/hyprpm/src/core/PluginManager.cpp b/hyprpm/src/core/PluginManager.cpp
-index 3343cbe..873c5d3 100644
+index 938b08b..5508046 100644
 --- a/hyprpm/src/core/PluginManager.cpp
 +++ b/hyprpm/src/core/PluginManager.cpp
-@@ -12,12 +12,15 @@
+@@ -15,12 +15,15 @@
  #include <fstream>
  #include <algorithm>
  #include <format>
@@ -31,7 +31,7 @@ index 3343cbe..873c5d3 100644
  #include <toml++/toml.hpp>
  #include <glaze/glaze.hpp>
  
-@@ -26,16 +29,25 @@
+@@ -29,16 +32,25 @@
  using namespace Hyprutils::String;
  using namespace Hyprutils::OS;
  
@@ -58,18 +58,18 @@ index 3343cbe..873c5d3 100644
  
  static std::string getTempRoot() {
      static auto ENV = getenv("XDG_RUNTIME_DIR");
-@@ -278,6 +290,24 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
+@@ -295,6 +307,24 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
  
      progress.m_iSteps = 3;
      progress.printMessageAbove(successString("Hyprland headers OK"));
 +
-+    static const char *env_file = "/etc/portage/make.conf";
++    static const std::filesystem::path env_file("/etc/portage/make.conf");
 +    std::unordered_map<std::string, std::string> vars;
-+    if (std::filesystem::is_regular_file(std::filesystem::path(env_file))) {
-+        progress.printMessageAbove(infoString("Reading {}", env_file));
-+        CProcess proc("/bin/bash", {"-ex", env_file});
++    if (std::filesystem::is_regular_file(env_file)) {
++        progress.printMessageAbove(infoString("Reading {}", env_file.string()));
++        CProcess proc("/bin/bash", {"-exc", "cd \"$1\"; . \"$2\"", "bash", env_file.parent_path().string(), env_file.filename().string()});
 +        if (!proc.runSync()) {
-+            std::println(stderr, "\n{}", failureString("Couldn't read {}", env_file));
++            std::println(stderr, "\n{}", failureString("Couldn't read {}", env_file.string()));
 +            return false;
 +        }
 +        re2::StringPiece input(proc.stdErr());
@@ -83,7 +83,7 @@ index 3343cbe..873c5d3 100644
      progress.m_szCurrentMessage = "Building plugin(s)";
      progress.print();
  
-@@ -294,7 +324,7 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
+@@ -311,7 +341,7 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
  
          for (auto const& bs : p.buildSteps) {
              const std::string& cmd = std::format("cd {} && PKG_CONFIG_PATH=\"{}/share/pkgconfig\" {}", m_szWorkingPluginDirectory, DataState::getHeadersPath(), bs);
