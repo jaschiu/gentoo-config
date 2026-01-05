@@ -1,9 +1,1 @@
-# required by media-libs/mesa-24.2.8::gentoo[-video_cards_radeon,video_cards_radeonsi,-video_cards_r600,-video_cards_r300]
-# required by x11-libs/gtk+-3.24.42-r1::gentoo[wayland]
-# required by gnome-extra/polkit-gnome-0.105-r2::gentoo
-# required by sys-auth/polkit-123-r1::gentoo[gtk]
-# required by sys-auth/elogind-255.5-r1::gentoo[policykit]
-# required by sys-process/procps-4.0.4-r2::gentoo[elogind]
-# required by @system
-# required by @world (argument)
->=x11-libs/libdrm-2.4.123-r1 video_cards_radeon
+x11-libs/libdrm video_cards_radeon
