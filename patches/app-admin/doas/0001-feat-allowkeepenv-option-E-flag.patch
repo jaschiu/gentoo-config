@@ -1,0 +1,246 @@
+From 01f78e1bbaba75a80b78b76b4c45be9778e2269a Mon Sep 17 00:00:00 2001
+From: Jason Chiu <general@jasonchiu.slmail.me>
+Date: Fri, 19 Sep 2025 13:33:31 -0700
+Subject: [PATCH] feat: allowkeepenv option, -E flag
+
+---
+ doas.1      | 19 ++++++++++++++++++-
+ doas.c      | 15 +++++++++++++--
+ doas.conf.5 | 28 +++++++++++++++++++++++++++-
+ doas.h      |  3 +++
+ env.c       |  4 +++-
+ parse.y     | 10 +++++++++-
+ 6 files changed, 73 insertions(+), 6 deletions(-)
+
+diff --git a/doas.1 b/doas.1
+index a91705e..e31a098 100644
+--- a/doas.1
++++ b/doas.1
+@@ -21,7 +21,7 @@
+ .Nd execute commands as another user
+ .Sh SYNOPSIS
+ .Nm doas
+-.Op Fl Lns
++.Op Fl ELns
+ .Op Fl C Ar config
+ .Op Fl u Ar user
+ .Ar command
+@@ -66,6 +66,23 @@ The working directory is not changed.
+ .Pp
+ The options are as follows:
+ .Bl -tag -width tenletters
++.It Fl E
++Preserve the invoking user's environment variables when creating the
++environment for the new process, similar to
++.Xr sudo 8
++with
++.Fl E .
++Environment variables that are explicitly set or removed by matching
++rules using
++.Ic setenv
++still take precedence. This option is only allowed if the matching rule
++has the
++.Ic keepenv
++or
++.Ic allowkeepenv
++option; otherwise
++.Nm
++exits with an error.
+ .It Fl C Ar config
+ Parse and check the configuration file
+ .Ar config ,
+diff --git a/doas.c b/doas.c
+index 0ea380a..ce8062e 100644
+--- a/doas.c
++++ b/doas.c
+@@ -42,7 +42,7 @@
+ static void __dead
+ usage(void)
+ {
+-	fprintf(stderr, "usage: doas [-Lns] [-C config] [-u user]"
++	fprintf(stderr, "usage: doas [-ELns] [-C config] [-u user]"
+ 	    " command [args]\n");
+ 	exit(1);
+ }
+@@ -256,6 +256,7 @@ main(int argc, char **argv)
+ 	int i, ch, rv;
+ 	int sflag = 0;
+ 	int nflag = 0;
++	int Eflag = 0;
+ 	char cwdpath[PATH_MAX];
+ 	const char *cwd;
+ 	char **envp;
+@@ -271,7 +272,7 @@ main(int argc, char **argv)
+ 
+ 	uid = getuid();
+ 
+-	while ((ch = getopt(argc, argv, "+C:Lnsu:")) != -1) {
++	while ((ch = getopt(argc, argv, "+C:ELnsu:")) != -1) {
+ 		switch (ch) {
+ 		case 'C':
+ 			confpath = optarg;
+@@ -282,6 +283,9 @@ main(int argc, char **argv)
+ #else
+ 			exit(0);
+ #endif
++		case 'E':
++			Eflag = 1;
++			break;
+ 		case 'u':
+ 			if (parseuid(optarg, &target) != 0)
+ 				errx(1, "unknown user");
+@@ -354,6 +358,13 @@ main(int argc, char **argv)
+ 		errc(1, EPERM, NULL);
+ 	}
+ 
++	/* If -E was requested, only allow it when the rule permits keeping env */
++	if (Eflag) {
++		if (!(rule->options & (KEEPENV | ALLOWKEEPENV)))
++			errx(1, "-E specified but rule does not allow keeping the environment");
++		preserve_env = 1;
++	}
++
+ #if defined(USE_SHADOW)
+ 	if (!(rule->options & NOPASS)) {
+ 		if (nflag)
+diff --git a/doas.conf.5 b/doas.conf.5
+index e98bfbe..a7c40f4 100644
+--- a/doas.conf.5
++++ b/doas.conf.5
+@@ -42,7 +42,7 @@ Rules consist of the following parts:
+ The action to be taken if this rule matches.
+ .It Ar options
+ Options are:
+-.Bl -tag -width keepenv
++.Bl -tag -width allowkeepenv
+ .It Ic nopass
+ The user is not required to enter a password.
+ .It Ic nolog
+@@ -55,6 +55,30 @@ again for some time.
+ Environment variables other than those listed in
+ .Xr doas 1
+ are retained when creating the environment for the new process.
++.It Ic allowkeepenv
++Allow the invoking user to request preservation of the current environment
++via the
++.Fl E
++flag to
++.Xr doas 1 .
++When a matching rule has
++.Ic allowkeepenv ,
++the environment is preserved only when the user supplies
++.Fl E .
++This differs from
++.Ic keepenv ,
++which always preserves the invoking environment for matching rules without
++requiring
++.Fl E .
++In both cases, variables explicitly managed by
++.Ic setenv
++are applied after the preserved environment, allowing administrators to
++override or remove specific variables.
++The
++.Ic keepenv
++and
++.Ic allowkeepenv
++options are mutually exclusive and may not appear together in the same rule.
+ .It Ic setenv { Oo Ar variable ... Oc Oo Ar variable=value ... Oc Ic }
+ Keep or set the space-separated specified variables.
+ Variables may also be removed with a leading
+@@ -140,6 +164,8 @@ permit persist setenv { PKG_CACHE PKG_PATH } aja cmd pkg_add
+ permit setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
+ permit nopass tedu as root cmd /usr/sbin/procmap
+ permit nopass keepenv setenv { PATH } root as root
++.\" Example allowing users to request keeping their environment with -E
++permit allowkeepenv setenv { -ENV } :wheel
+ .Ed
+ .Sh SEE ALSO
+ .Xr doas 1 ,
+diff --git a/doas.h b/doas.h
+index a8aa41b..809242c 100644
+--- a/doas.h
++++ b/doas.h
+@@ -30,6 +30,7 @@ extern size_t nrules;
+ extern int parse_errors;
+ 
+ extern const char *formerpath;
++extern int preserve_env;
+ 
+ struct passwd;
+ 
+@@ -43,6 +44,8 @@ char **prepenv(const struct rule *, const struct passwd *,
+ #define KEEPENV		0x2
+ #define PERSIST		0x4
+ #define NOLOG		0x8
++/* allow users to request preserving env via -E */
++#define ALLOWKEEPENV	0x10
+ 
+ #ifdef USE_PAM
+ void pamauth(const char *, const char *, int, int, int);
+diff --git a/env.c b/env.c
+index e2286fc..c54d0c7 100644
+--- a/env.c
++++ b/env.c
+@@ -32,6 +32,7 @@
+ #include "doas.h"
+ 
+ const char *formerpath;
++int preserve_env = 0;
+ 
+ struct envnode {
+ 	RB_ENTRY(envnode) node;
+@@ -112,7 +113,8 @@ createenv(const struct rule *rule, const struct passwd *mypw,
+ 
+ 	fillenv(env, copyset);
+ 
+-	if (rule->options & KEEPENV) {
++	if ((rule->options & KEEPENV) ||
++	    ((rule->options & ALLOWKEEPENV) && preserve_env)) {
+ 		extern char **environ;
+ 
+ 		for (i = 0; environ[i] != NULL; i++) {
+diff --git a/parse.y b/parse.y
+index 388c2a5..d21557f 100644
+--- a/parse.y
++++ b/parse.y
+@@ -75,7 +75,7 @@ arraylen(const char **arr)
+ %}
+ 
+ %token TPERMIT TDENY TAS TCMD TARGS
+-%token TNOPASS TNOLOG TPERSIST TKEEPENV TSETENV
++%token TNOPASS TNOLOG TPERSIST TKEEPENV TSETENV TALLOWKEEPENV
+ %token TSTRING
+ 
+ %%
+@@ -130,6 +130,10 @@ options:	/* none */ {
+ 				yyerror("can't combine nopass and persist");
+ 				YYERROR;
+ 			}
++			if (($$.options & (KEEPENV|ALLOWKEEPENV)) == (KEEPENV|ALLOWKEEPENV)) {
++				yyerror("can't combine keepenv and allowkeepenv");
++				YYERROR;
++			}
+ 			if ($2.envlist) {
+ 				if ($$.envlist) {
+ 					yyerror("can't have two setenv sections");
+@@ -150,6 +154,9 @@ option:		TNOPASS {
+ 		} | TKEEPENV {
+ 			$$.options = KEEPENV;
+ 			$$.envlist = NULL;
++		} | TALLOWKEEPENV {
++			$$.options = ALLOWKEEPENV;
++			$$.envlist = NULL;
+ 		} | TSETENV '{' strlist '}' {
+ 			$$.options = 0;
+ 			$$.envlist = $3.strlist;
+@@ -220,6 +227,7 @@ static struct keyword {
+ 	{ "nolog", TNOLOG },
+ 	{ "persist", TPERSIST },
+ 	{ "keepenv", TKEEPENV },
++	{ "allowkeepenv", TALLOWKEEPENV },
+ 	{ "setenv", TSETENV },
+ };
+ 
+-- 
+2.49.1
+
