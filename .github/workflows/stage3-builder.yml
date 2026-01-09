@@ -24,8 +24,7 @@ jobs:
             .github/stage3.spec
             package.accept_keywords/catalyst
             patches
-            repos.conf/gentoo.conf
-            repos.conf/zipcpi.conf
+            repos.conf
 
       - name: Checkout zipcpi repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
@@ -81,7 +80,7 @@ jobs:
           mkdir -p /var/tmp/catalyst/builds/default
           mkdir -p /var/tmp/catalyst/snapshots
           mkdir -p /var/cache/distfiles
-          rsync -rlE --remove-source-files repos.conf /etc/portage
+          rsync -rlER --remove-source-files repos.conf/{gentoo,zipcpi}.conf /etc/portage
 
       - name: Create catalyst snapshot
         run: |
@@ -104,6 +103,9 @@ jobs:
               -e "s/@TREEISH@/${TREEISH}/g" \
               stage3.spec | tee /var/tmp/catalyst/stage3.spec
           rsync -rlER --remove-source-files releng /var/tmp/catalyst
+          rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
+          ls -l /var/tmp/catalyst/releng/releases/portage/stages/repos.conf
+          
           echo "jobs = $(nproc)" >> /etc/catalyst/catalyst.conf
           echo "load-average = $(($(nproc) + 1))" >> /etc/catalyst/catalyst.conf
           grep -h -P '^(PORTAGE_TMPDIR|GENTOO_MIRRORS)=' /etc/portage/*.conf | tee -a /etc/catalyst/catalystrc
