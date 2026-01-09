@@ -1,0 +1,11 @@
+--- a/catalyst/targets/snapshot.py
++++ b/catalyst/targets/snapshot.py
+@@ -33,7 +33,7 @@ class snapshot(TargetBase):
+         self.gitdir = str(self.ebuild_repo)
+ 
+     def update_ebuild_repo(self) -> str:
+-        repouri = 'https://anongit.gentoo.org/git/repo/sync/gentoo.git'
++        repouri = 'https://github.com/gentoo-mirror/gentoo.git'
+ 
+         if self.ebuild_repo.is_dir():
+             git_cmds = [
