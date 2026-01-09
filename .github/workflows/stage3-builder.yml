@@ -39,6 +39,7 @@ jobs:
         run: |
           rsync -rlE --remove-source-files package.accept_keywords patches /etc/portage
           rsync -rltER --remove-source-files zipcpi/profiles zipcpi/metadata /var/db/repos
+          ls -Rl /var/db/repos/zipcpi
           mv .github/stage3.spec .
 
       - name: Prepare for emaint sync and emerge
