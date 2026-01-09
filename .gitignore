@@ -3,4 +3,5 @@
 /savedconfig
 /secureboot
 /make.profile
+/repos.conf/local.conf
 /smart-live-rebuild.conf
