@@ -1,2 +1,5 @@
 # dev-libs/wayland-protocols ~amd64
-<gui-wm/hyprland-0.51 ~amd64
+gui-libs/hyprland-guiutils ~amd64
+gui-libs/hyprtoolkit ~amd64
+gui-libs/hyprwire ~amd64
+<gui-wm/hyprland-0.54 ~amd64
