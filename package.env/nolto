@@ -4,6 +4,7 @@
 # dev-qt/qtdeclarative nolto.conf
 # dev-qt/qtwebengine nolto.conf
 # dev-util/DirectXShaderCompiler nolto.conf
+app-benchmarks/hyperfine nolto.conf
 app-containers/aardvark-dns nolto.conf
 app-containers/netavark nolto.conf
 app-shells/mcfly nolto.conf
