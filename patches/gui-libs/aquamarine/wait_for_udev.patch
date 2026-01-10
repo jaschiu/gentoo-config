@@ -1,0 +1,30 @@
+--- a/src/backend/drm/DRM.cpp
++++ b/src/backend/drm/DRM.cpp
+@@ -295,8 +295,25 @@ std::vector<SP<CDRMBackend>> Aquamarine::CDRMBackend::attempt(SP<CBackend> backe
+     auto gpus = scanGPUs(backend);
+ 
+     if (gpus.empty()) {
+-        backend->log(AQ_LOG_ERROR, "drm: Found no gpus to use, cannot continue");
+-        return {};
++        backend->log(AQ_LOG_DEBUG, "drm: No GPUs found on first scan, waiting for up to 5s for devices to appear");
++
++        auto started = std::chrono::system_clock::now();
++
++        while (gpus.empty()) {
++            std::this_thread::sleep_for(std::chrono::milliseconds(250));
++            backend->session->dispatchPendingEventsAsync();
++            gpus = scanGPUs(backend);
++
++            if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - started).count() >= 5000) {
++                backend->log(AQ_LOG_DEBUG, "drm: GPU scan timeout reached");
++                break;
++            }
++        }
++
++        if (gpus.empty()) {
++            backend->log(AQ_LOG_ERROR, "drm: Found no gpus to use, cannot continue");
++            return {};
++        }
+     }
+ 
+     backend->log(AQ_LOG_DEBUG, std::format("drm: Found {} GPUs", gpus.size()));
