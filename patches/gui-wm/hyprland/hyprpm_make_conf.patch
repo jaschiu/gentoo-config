@@ -1,5 +1,22 @@
+From 066781a03382b4758687ff34dcc2b303411f5bcd Mon Sep 17 00:00:00 2001
+From: Jason Chiu <general@jasonchiu.slmail.me>
+Date: Sat, 10 Jan 2026 10:08:39 -0800
+Subject: [PATCH 1/2] hyprpm: read /etc/portage/make.conf and pass env vars to
+ plugin builds
+
+Add RE2 dependency to hyprpm and modify execAndGet to accept environment
+variables. When building plugins, read /etc/portage/make.conf (if it exists)
+and pass the environment variables to the build commands.
+
+This is useful for Gentoo users who have custom CFLAGS/CXXFLAGS/etc in
+their make.conf.
+---
+ hyprpm/CMakeLists.txt             |  2 +-
+ hyprpm/src/core/PluginManager.cpp | 32 +++++++++++++++++++++++++++++--
+ 2 files changed, 31 insertions(+), 3 deletions(-)
+
 diff --git a/hyprpm/CMakeLists.txt b/hyprpm/CMakeLists.txt
-index f2e0b22..6276900 100644
+index ee73810..dfcf534 100644
 --- a/hyprpm/CMakeLists.txt
 +++ b/hyprpm/CMakeLists.txt
 @@ -9,7 +9,7 @@ file(GLOB_RECURSE SRCFILES CONFIGURE_DEPENDS "src/*.cpp")
@@ -9,13 +26,13 @@ index f2e0b22..6276900 100644
 -pkg_check_modules(hyprpm_deps REQUIRED IMPORTED_TARGET tomlplusplus hyprutils>=0.7.0)
 +pkg_check_modules(hyprpm_deps REQUIRED IMPORTED_TARGET re2 tomlplusplus hyprutils>=0.7.0)
  
- find_package(glaze QUIET)
+ find_package(glaze 6.0.0 QUIET)
  if (NOT glaze_FOUND)
 diff --git a/hyprpm/src/core/PluginManager.cpp b/hyprpm/src/core/PluginManager.cpp
-index 938b08b..5508046 100644
+index 0d35b4a..9a521fc 100644
 --- a/hyprpm/src/core/PluginManager.cpp
 +++ b/hyprpm/src/core/PluginManager.cpp
-@@ -15,12 +15,15 @@
+@@ -16,12 +16,15 @@
  #include <fstream>
  #include <algorithm>
  #include <format>
@@ -31,13 +48,11 @@ index 938b08b..5508046 100644
  #include <toml++/toml.hpp>
  #include <glaze/glaze.hpp>
  
-@@ -29,16 +32,25 @@
- using namespace Hyprutils::String;
+@@ -32,16 +35,23 @@ using namespace Hyprutils::String;
  using namespace Hyprutils::OS;
+ using namespace Hyprutils::Memory;
  
 -static std::string execAndGet(std::string cmd) {
-+
-+
 +template<typename C, typename = std::enable_if_t<
 +    std::is_same_v<typename C::value_type, std::pair<const std::string, std::string>>>
 +> static std::string execAndGet(std::string cmd, C const &env_vars) {
@@ -58,7 +73,7 @@ index 938b08b..5508046 100644
  
  static std::string getTempRoot() {
      static auto ENV = getenv("XDG_RUNTIME_DIR");
-@@ -295,6 +307,24 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
+@@ -288,6 +298,24 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
  
      progress.m_iSteps = 3;
      progress.printMessageAbove(successString("Hyprland headers OK"));
@@ -83,7 +98,7 @@ index 938b08b..5508046 100644
      progress.m_szCurrentMessage = "Building plugin(s)";
      progress.print();
  
-@@ -311,7 +341,7 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
+@@ -304,7 +332,7 @@ bool CPluginManager::addNewPluginRepo(const std::string& url, const std::string&
  
          for (auto const& bs : p.buildSteps) {
              const std::string& cmd = std::format("cd {} && PKG_CONFIG_PATH=\"{}/share/pkgconfig\" {}", m_szWorkingPluginDirectory, DataState::getHeadersPath(), bs);
@@ -92,15 +107,6 @@ index 938b08b..5508046 100644
          }
  
          if (m_bVerbose)
-diff --git a/hyprpm/src/meson.build b/hyprpm/src/meson.build
-index fd914f9..946775e 100644
---- a/hyprpm/src/meson.build
-+++ b/hyprpm/src/meson.build
-@@ -8,6 +8,7 @@ executable(
-     dependency('hyprutils', version: '>= 0.1.1'),
-     dependency('threads'),
-     dependency('tomlplusplus'),
-+    dependency('re2'),
-     dependency('glaze', method: 'cmake'),
-   ],
-   install: true,
+-- 
+2.52.0
+
