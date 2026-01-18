@@ -7,5 +7,6 @@ profile: zipcpi:llvm-hardened-desktop
 snapshot_treeish: @TREEISH@
 source_subpath: 23.0-hardened/stage3-amd64-hardened-openrc-@TIMESTAMP@
 compression_mode: pixz
+update_seed: yes
 portage_confdir: /var/tmp/catalyst/releng/releases/portage/stages
 portage_prefix: releng
