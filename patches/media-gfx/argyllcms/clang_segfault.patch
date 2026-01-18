@@ -1,0 +1,66 @@
+--- a/gamut/gamut.c
++++ b/gamut/gamut.c
+@@ -3964,19 +3964,30 @@
+ 		}
+ 		return NULL;		/* Hmm */
+ 
+-	} else {			/* It's a triangle or list of triangles */
+-		int nt;			/* Number of triangles in list */
+-		gtri **tpp;		/* Pointer to list of triangles */
+-		int i, j;
++	} else if (np->tag == 2) {		/* It's a single triangle */
++		gtri *t = (gtri *)np;
++		int j;
+ 
+-		if (np->tag == 2) {			/* It's a triangle */
+-			tpp = (gtri **)&np;
+-			nt = 1;
+-		} else if (np->tag == 3) {	/* It's a triangle list */
+-			gbspl *n = (gbspl *)np;
+-			tpp = n->t;
+-			nt = n->nt;
++		/* Check if the point is within this triangle */
++		for (j = 0; j < 3; j++) {
++			double ds;
++			ds = t->ee[j][0] * nin[0]
++			   + t->ee[j][1] * nin[1]
++		       + t->ee[j][2] * nin[2]
++			   + t->ee[j][3];
++			if (ds > 1e-10)
++				break;			/* Not within triangle */
+ 		}
++		if (j >= 3) {
++			return t;
++		}
++		/* Hmm. */
++
++	} else if (np->tag == 3) {		/* It's a triangle list */
++		gbspl *n = (gbspl *)np;
++		gtri **tpp = n->t;
++		int nt = n->nt;
++		int i, j;
+ 
+ 		/* Go through the list and stop at the first triangle */
+ 		/* that the node lies in. */
+@@ -5207,14 +5218,16 @@
+ 		ISDBG(("vector_isect_rec returning\n"));
+ 		return;
+ 
+-	/* It's a list of triangles */
++	/* It's a triangle or list of triangles */
+ 	} else {
+-		int nt;			/* Number of triangles in list */
+-		gtri **tpp;		/* Pointer to list of triangles */
++		int nt = 0;			/* Number of triangles in list */
++		gtri **tpp = NULL;		/* Pointer to list of triangles */
++		gtri *single_tri = NULL;	/* For single triangle case */
+ 		int i, j;
+ 
+-		if (np->tag == 2) {			/* It's a triangle */
+-			tpp = (gtri **)&np;
++		if (np->tag == 2) {			/* It's a single triangle */
++			single_tri = (gtri *)np;
++			tpp = &single_tri;
+ 			nt = 1;
+ 		} else if (np->tag == 3) {	/* It's a triangle list */
+ 			gbspl *n = (gbspl *)np;
