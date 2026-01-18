@@ -2,26 +2,31 @@ name: stage3-builder
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'stage3.spec'
-  #     - 'make.conf'
-  #     - 'march.conf'
+    inputs:
+      stage1:
+        description: 'Skip stage1 build and use existing artifact'
+        required: false
+        default: ''
+        type: string
 
 jobs:
-  build:
+  stage1:
+    if: ${{ inputs.stage1 == '' }}
     runs-on: ubuntu-latest
     container:
       image: gentoo/stage3
       options: --privileged
+    outputs:
+      artifact_name: ${{ steps.artifact.outputs.name }}
+      timestamp: ${{ steps.seed.outputs.timestamp }}
+      treeish: ${{ steps.snapshot.outputs.treeish }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           sparse-checkout: |
-            .github/stage3.spec
+            .github/stage1.spec
             package.accept_keywords/catalyst
             patches
             repos.conf
@@ -39,7 +44,7 @@ jobs:
         run: |
           rsync -rlE --remove-source-files package.accept_keywords patches /etc/portage
           rsync -rltER --remove-source-files zipcpi/profiles zipcpi/metadata /var/db/repos
-          mv .github/stage3.spec .
+          mv .github/stage1.spec .
 
       - name: Prepare for emaint sync and emerge
         run: |
@@ -50,7 +55,6 @@ jobs:
           echo "PORTAGE_TMPDIR=\"$RUNNER_TEMP\"" | tee -a make.conf >&2
           echo "EMERGE_DEFAULT_OPTS=\"--jobs 2 --load-average=$(($(nproc) + 1))\"" | tee -a make.conf >&2
           echo "MAKEOPTS=\"-j$(nproc) --load-average=$(($(nproc) + 1))\"" | tee -a make.conf >&2
-
         working-directory: /etc/portage
 
       - name: Emerge portage and catalyst
@@ -101,6 +105,128 @@ jobs:
         run: |
           sed -e "s/@TIMESTAMP@/${TIMESTAMP}/g" \
               -e "s/@TREEISH@/${TREEISH}/g" \
+              stage1.spec | tee /var/tmp/catalyst/stage1.spec
+          rsync -rlER --remove-source-files releng /var/tmp/catalyst
+          rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
+
+          echo "jobs = $(nproc)" >> /etc/catalyst/catalyst.conf
+          echo "load-average = $(($(nproc) + 1))" >> /etc/catalyst/catalyst.conf
+          grep -h -P '^(PORTAGE_TMPDIR|GENTOO_MIRRORS)=' /etc/portage/*.conf | tee -a /etc/catalyst/catalystrc
+        env:
+          TIMESTAMP: ${{ steps.seed.outputs.timestamp }}
+          TREEISH: ${{ steps.snapshot.outputs.treeish }}
+
+      - name: Run catalyst for stage1
+        run: |
+          catalyst -f /var/tmp/catalyst/stage1.spec
+
+      - name: Find built stage1
+        id: artifact
+        run: |
+          STAGE1=$(find /var/tmp/catalyst/builds -name "stage1-*.tar.*" -type f | head -1)
+          echo "path=${STAGE1}" >> $GITHUB_OUTPUT
+          echo "name=$(basename ${STAGE1})" >> $GITHUB_OUTPUT
+
+      - name: Upload stage1 artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: ${{ steps.artifact.outputs.path }}
+          retention-days: 30
+
+  stage3:
+    needs: [stage1]
+    if: ${{ always() && (needs.stage1.result == 'success' || inputs.stage1 != '') }}
+    runs-on: ubuntu-latest
+    container:
+      image: gentoo/stage3
+      options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          sparse-checkout: |
+            .github/stage3.spec
+            package.accept_keywords/catalyst
+            patches
+            repos.conf
+
+      - name: Checkout zipcpi repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          repository: jaschiu/zipcpi
+          path: zipcpi
+          sparse-checkout: |
+            profiles/
+            metadata/
+
+      - name: Move repositories
+        run: |
+          rsync -rlE --remove-source-files package.accept_keywords patches /etc/portage
+          rsync -rltER --remove-source-files zipcpi/profiles zipcpi/metadata /var/db/repos
+          mv .github/stage3.spec .
+
+      - name: Prepare for emaint sync and emerge
+        run: |
+          sed -i 's/^COMMON_FLAGS.\+/COMMON_FLAGS="-O3 -march=x86-64-v3 -pipe"/' make.conf
+          echo 'sys-apps/util-linux python' >> package.use/catalyst
+          echo 'dev-vcs/git -gpg -perl -webdav' >> package.use/catalyst
+          echo 'dev-util/catalyst -iso' >> package.use/catalyst
+          echo "PORTAGE_TMPDIR=\"$RUNNER_TEMP\"" | tee -a make.conf >&2
+          echo "EMERGE_DEFAULT_OPTS=\"--jobs 2 --load-average=$(($(nproc) + 1))\"" | tee -a make.conf >&2
+          echo "MAKEOPTS=\"-j$(nproc) --load-average=$(($(nproc) + 1))\"" | tee -a make.conf >&2
+        working-directory: /etc/portage
+
+      - name: Emerge portage and catalyst
+        run: |
+          emerge-webrsync -q
+          emerge -1 sys-apps/portage
+          emerge dev-util/catalyst dev-vcs/git net-misc/curl
+
+      - name: Get timestamp (from stage1 or generate new)
+        id: seed
+        run: |
+          if [ -n "${{ needs.stage1.outputs.timestamp }}" ]; then
+            echo "timestamp=${{ needs.stage1.outputs.timestamp }}" >> $GITHUB_OUTPUT
+          else
+            LATEST=$(curl -fsSL https://distfiles.gentoo.org/releases/amd64/autobuilds/current-stage3-amd64-hardened-openrc/latest-stage3-amd64-hardened-openrc.txt | \
+              grep -oP -m 1 'stage3-amd64-hardened-openrc-\K[0-9]+T[0-9]+Z')
+            echo "timestamp=${LATEST}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Prepare for catalyst
+        run: |
+          mkdir -p /var/tmp/catalyst/builds/23.0-llvm-hardened
+          mkdir -p /var/tmp/catalyst/snapshots
+          mkdir -p /var/cache/distfiles
+          rsync -rlER --remove-source-files repos.conf/{gentoo,zipcpi}.conf /etc/portage
+
+      - name: Download stage1 artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: ${{ inputs.stage1 || needs.stage1.outputs.artifact_name }}
+          path: /var/tmp/catalyst/builds/23.0-llvm-hardened
+
+      - name: Create catalyst snapshot
+        run: |
+          catalyst --snapshot stable
+          SQFS="$(ls -1 /var/tmp/catalyst/snapshots/gentoo-*.sqfs)"
+          echo "treeish=$(basename "$SQFS" .sqfs | sed 's/gentoo-//')" >> $GITHUB_OUTPUT
+        id: snapshot
+
+      - name: Checkout releng repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          repository: gentoo/releng
+          path: releng
+          sparse-checkout: |
+            releases/portage/stages
+
+      - name: Prepare spec file
+        run: |
+          sed -e "s/@TIMESTAMP@/${TIMESTAMP}/g" \
+              -e "s/@TREEISH@/${TREEISH}/g" \
               stage3.spec | tee /var/tmp/catalyst/stage3.spec
           rsync -rlER --remove-source-files releng /var/tmp/catalyst
           rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
@@ -108,12 +234,11 @@ jobs:
           echo "jobs = $(nproc)" >> /etc/catalyst/catalyst.conf
           echo "load-average = $(($(nproc) + 1))" >> /etc/catalyst/catalyst.conf
           grep -h -P '^(PORTAGE_TMPDIR|GENTOO_MIRRORS)=' /etc/portage/*.conf | tee -a /etc/catalyst/catalystrc
-
         env:
           TIMESTAMP: ${{ steps.seed.outputs.timestamp }}
           TREEISH: ${{ steps.snapshot.outputs.treeish }}
 
-      - name: Run catalyst
+      - name: Run catalyst for stage3
         run: |
           catalyst -f /var/tmp/catalyst/stage3.spec
 
