@@ -61,7 +61,7 @@ jobs:
         run: |
           emerge-webrsync -q
           emerge -1 sys-apps/portage
-          emerge dev-util/catalyst dev-vcs/git net-misc/curl
+          emerge dev-util/catalyst dev-vcs/git net-misc/curl sys-kernel/gentoo-sources
 
       - name: Get latest seed stage3 timestamp
         id: seed
@@ -98,6 +98,8 @@ jobs:
         with:
           repository: gentoo/releng
           path: releng
+          sparse-checkout: |
+            releases/portage/stages
 
       - name: Prepare spec file
         run: |
@@ -107,6 +109,9 @@ jobs:
 
           rsync -rlER --remove-source-files releng /var/tmp/catalyst
           rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
+          # echo 'net-misc/curl ssl openssl curl_ssl_openssl' >> /var/tmp/catalyst/releng/releases/portage/stages/package.use/releng/fix
+          mkdir -p "/var/tmp/catalyst/tmp/23.0-llvm-hardened/stage1-x86_64-v3-opt-llvm-hardened-openrc-${TIMESTAMP}/usr/src/linux"
+          mount --bind -o ro "$(ls -d -1 /usr/src/linux-*-gentoo)" "/var/tmp/catalyst/tmp/23.0-llvm-hardened/stage1-x86_64-v3-opt-llvm-hardened-openrc-${TIMESTAMP}/usr/src/linux"
 
           echo "jobs = $(nproc)" >> /etc/catalyst/catalyst.conf
           echo "load-average = $(($(nproc) + 1))" >> /etc/catalyst/catalyst.conf
@@ -228,6 +233,7 @@ jobs:
 
           rsync -rlER --remove-source-files releng /var/tmp/catalyst
           rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
+          echo 'net-misc/curl ssl openssl curl_ssl_openssl' >> /var/tmp/catalyst/releng/releases/portage/stages/package.use/releng/circular
 
           echo "jobs = $(nproc)" >> /etc/catalyst/catalyst.conf
           echo "load-average = $(($(nproc) + 1))" >> /etc/catalyst/catalyst.conf
