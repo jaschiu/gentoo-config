@@ -98,14 +98,13 @@ jobs:
         with:
           repository: gentoo/releng
           path: releng
-          sparse-checkout: |
-            releases/portage/stages
 
       - name: Prepare spec file
         run: |
           sed -e "s/@TIMESTAMP@/${TIMESTAMP}/g" \
               -e "s/@TREEISH@/${TREEISH}/g" \
               stage1.spec | tee /var/tmp/catalyst/stage1.spec
+
           rsync -rlER --remove-source-files releng /var/tmp/catalyst
           rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
 
@@ -136,7 +135,7 @@ jobs:
 
   stage3:
     needs: [stage1]
-    if: ${{ always() && (needs.stage1.result == 'success' || inputs.stage1 != '') }}
+    if: always() && (needs.stage1.result == 'success' || inputs.stage1 != '')
     runs-on: ubuntu-latest
     container:
       image: gentoo/stage3
@@ -220,14 +219,13 @@ jobs:
         with:
           repository: gentoo/releng
           path: releng
-          sparse-checkout: |
-            releases/portage/stages
 
       - name: Prepare spec file
         run: |
           sed -e "s/@TIMESTAMP@/${TIMESTAMP}/g" \
               -e "s/@TREEISH@/${TREEISH}/g" \
               stage3.spec | tee /var/tmp/catalyst/stage3.spec
+
           rsync -rlER --remove-source-files releng /var/tmp/catalyst
           rsync -rlER /etc/portage/./repos.conf/{gentoo,zipcpi}.conf /var/tmp/catalyst/releng/releases/portage/stages
 
