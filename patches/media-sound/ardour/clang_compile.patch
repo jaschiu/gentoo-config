@@ -1,0 +1,11 @@
+--- a/libs/backends/dummy/dummy_audiobackend.cc
++++ b/libs/backends/dummy/dummy_audiobackend.cc
+@@ -1409,7 +1409,7 @@
+ static const float _demolition[] = {
+ 	 0.0f,             /* special case - 0dbFS white noise */
+ 	 0.0f,             /* zero, may cause denomrals following a signal */
+-	 0.73 / 1e45,      /* very small - should be denormal when floated */
++	 static_cast<float>(0.73 / 1e45),  /* very small - should be denormal when floated */
+ 	 3.7f,             /* arbitrary number > 0dBFS */
+ 	-4.3f,             /* arbitrary negative number > 0dBFS */
+ 	 4294967395.0f,    /* 2^16 + 100 */
