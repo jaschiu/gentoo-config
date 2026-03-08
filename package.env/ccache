@@ -13,7 +13,6 @@ llvm-core/mlir ccache.conf
 llvm-core/llvm ccache.conf
 media-libs/amdvlk ccache.conf
 media-sound/ardour ccache.conf
-net-libs/webkit-gtk ccache.conf
 net-libs/nodejs ccache.conf
 net-p2p/qbittorrent ccache.conf
 sci-libs/hipBLAS ccache.conf
