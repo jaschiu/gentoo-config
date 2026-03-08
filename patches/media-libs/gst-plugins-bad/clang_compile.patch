@@ -1,0 +1,22 @@
+--- a/gst/dvbsubenc/libimagequant/libimagequant.c
++++ b/gst/dvbsubenc/libimagequant/libimagequant.c
+@@ -1184,7 +1184,7 @@ remap_to_palette (liq_image * const input_image,
+     viter_init (map, max_threads, average_color);
+ 
+ #pragma omp parallel for if (rows*cols > 3000) \
+-            schedule(static) default(none) shared(average_color) reduction(+:remapping_error)
++            schedule(static) default(none) shared(average_color,n,map,min_opaque_val,output_pixels,cols,rows,input_image) private(col) reduction(+:remapping_error)
+     for (row = 0; row < rows; ++row) {
+       const f_pixel *const row_pixels = liq_image_get_row_f (input_image, row);
+       unsigned int last_match = 0;
+--- a/gst/dvbsubenc/libimagequant/viter.c
++++ b/gst/dvbsubenc/libimagequant/viter.c
+@@ -87,7 +87,7 @@ viter_do_iteration (histogram * hist, colormap * const map,
+     int j;
+ 
+ #pragma omp parallel for if (hist_size > 3000) \
+-            schedule(static) default(none) shared(average_color,callback) reduction(+:total_diff)
++            schedule(static) default(none) shared(average_color,callback,n,achv,min_opaque_val,map,hist_size) reduction(+:total_diff)
+     for (j = 0; j < hist_size; j++) {
+       float diff;
+       unsigned int match =
