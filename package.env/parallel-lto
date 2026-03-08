@@ -5,6 +5,7 @@ dev-python/pyqt6 parallel-lto.conf
 # dev-qt/qtwebengine parallel-lto.conf
 dev-util/DirectXShaderCompiler parallel-lto.conf
 games-emulation/eden parallel-lto.conf
+llvm-core/llvm parallel-lto.conf
 llvm-core/clang parallel-lto.conf
 sci-libs/rocBLAS parallel-lto.conf
 sci-libs/rocSPARSE parallel-lto.conf

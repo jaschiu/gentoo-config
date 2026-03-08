@@ -7,6 +7,7 @@ app-shells/fzf nopolyhedra.conf
 app-text/typst nopolyhedra.conf
 dev-lang/go nopolyhedra.conf
 dev-lang/orc nopolyhedra.conf
+dev-lang/php nopolyhedra.conf
 dev-lang/python nopolyhedra.conf
 dev-lang/swift nopolyhedra.conf
 dev-libs/angelscript nopolyhedra.conf
@@ -15,6 +16,8 @@ dev-libs/glib nopolyhedra.conf
 dev-libs/gobject-introspection nopolyhedra.conf
 dev-libs/icu nopolyhedra.conf
 dev-libs/libffi nopolyhedra.conf
+dev-libs/libgcrypt nopolyhedra.conf
+dev-libs/libgusb nopolyhedra.conf
 dev-libs/libinput nopolyhedra.conf
 dev-libs/libsodium nopolyhedra.conf
 dev-libs/nettle nopolyhedra.conf
@@ -22,6 +25,7 @@ dev-libs/nspr nopolyhedra.conf
 dev-libs/openssl nopolyhedra.conf
 dev-libs/supercop nopolyhedra.conf
 dev-libs/wayland nopolyhedra.conf
+dev-python/cryptography nopolyhedra.conf
 dev-python/numpy nopolyhedra.conf
 dev-python/rfc3161-client nopolyhedra.conf
 dev-python/scipy nopolyhedra.conf
@@ -40,6 +44,11 @@ llvm-core/llvm nopolyhedra.conf
 llvm-runtimes/openmp nopolyhedra.conf
 media-gfx/fontforge nopolyhedra.conf
 media-libs/fontconfig nopolyhedra.conf
+media-libs/gstreamer nopolyhedra.conf
+media-libs/gst-plugins-bad nopolyhedra.conf
+media-libs/gst-plugins-base nopolyhedra.conf
+media-libs/gst-plugins-good nopolyhedra.conf
+media-libs/gst-plugins-ugly nopolyhedra.conf
 media-libs/libv4l nopolyhedra.conf
 media-libs/libvpx nopolyhedra.conf
 media-libs/mesa nopolyhedra.conf
@@ -62,6 +71,7 @@ sys-libs/libnvme nopolyhedra.conf
 sys-libs/libunwind nopolyhedra.conf
 www-client/firefox nopolyhedra.conf
 www-client/librewolf nopolyhedra.conf
+x11-base/xorg-proto nopolyhedra.conf
 x11-base/xwayland nopolyhedra.conf
 x11-libs/gtk+ nopolyhedra.conf
 x11-libs/libdrm nopolyhedra.conf
