@@ -21,6 +21,7 @@ dev-python/adblock nolto.conf
 dev-python/bcrypt nolto.conf
 dev-python/cryptography nolto.conf
 dev-python/numpy nolto.conf
+dev-python/pydantic nolto.conf
 dev-python/pydantic-core nolto.conf
 dev-python/rfc3161-client nolto.conf
 dev-python/rpds-py nolto.conf
