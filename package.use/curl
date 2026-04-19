@@ -1,3 +1,4 @@
+net-libs/ngtcp2 gnutls -openssl
 net-misc/curl CURL_QUIC: -* ngtcp2
 net-misc/curl CURL_SSL: -* gnutls
 net-misc/curl gnutls -imap -openssl -pop3 -smtp -tftp
