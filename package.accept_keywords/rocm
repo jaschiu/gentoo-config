@@ -1,21 +1,21 @@
-dev-util/rocminfo ~amd64
-dev-util/rocm-smi ~amd64
+<dev-util/rocminfo-7.2.0 ~amd64
+<dev-util/rocm-smi-7.2.0 ~amd64
 
-dev-util/hipcc ~amd64
-dev-build/rocm-cmake ~amd64
-dev-libs/rocm-core ~amd64
-dev-libs/rocm-device-libs ~amd64
-dev-libs/roct-thunk-interface ~amd64
-dev-libs/rocr-runtime ~amd64
-dev-libs/rocm-comgr ~amd64
-dev-libs/rocdbgapi ~amd64
+<dev-util/hipcc-7.2.0 ~amd64
+<dev-build/rocm-cmake-7.2.0 ~amd64
+<dev-libs/rocm-core-7.2.0 ~amd64
+<dev-libs/rocm-device-libs-7.2.0 ~amd64
+<dev-libs/roct-thunk-interface-7.2.0 ~amd64
+<dev-libs/rocr-runtime-7.2.0 ~amd64
+<dev-libs/rocm-comgr-7.2.0 ~amd64
+<dev-libs/rocdbgapi-7.2.0 ~amd64
 
-dev-util/hip ~amd64
-dev-util/Tensile ~amd64
-dev-util/roctracer ~amd64
-sci-libs/hipBLAS-common
-sci-libs/rocBLAS ~amd64
-sci-libs/rocSOLVER ~amd64
-sci-libs/rocSPARSE ~amd64
-sci-libs/rocPRIM ~amd64
-sci-libs/hipBLAS ~amd64
+<dev-util/hip-7.2.0 ~amd64
+<dev-util/Tensile-7.2.0 ~amd64
+<dev-util/roctracer-7.2.0 ~amd64
+<sci-libs/hipBLAS-common-7.2.0 ~amd64
+<sci-libs/rocBLAS-7.2.0 ~amd64
+<sci-libs/rocSOLVER-7.2.0 ~amd64
+<sci-libs/rocSPARSE-7.2.0 ~amd64
+<sci-libs/rocPRIM-7.2.0 ~amd64
+<sci-libs/hipBLAS-7.2.0 ~amd64
