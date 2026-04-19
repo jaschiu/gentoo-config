@@ -1,0 +1,2 @@
+net-misc/curl-impersonate ~amd64
+dev-python/curl-cffi ~amd64

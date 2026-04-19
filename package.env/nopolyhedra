@@ -60,6 +60,7 @@ net-dns/dnscrypt-proxy nopolyhedra.conf
 net-libs/gnutls nopolyhedra.conf
 net-libs/libsrtp nopolyhedra.conf
 net-libs/nodejs nopolyhedra.conf
+net-misc/curl-impersonate nopolyhedra.conf
 net-p2p/monero nopolyhedra.conf
 sci-libs/openblas nopolyhedra.conf
 sci-ml/ollama nopolyhedra.conf

@@ -31,6 +31,7 @@ dev-libs/supercop::guru
 dev-libs/unordered_dense::guru
 dev-libs/zycore-c::guru
 dev-libs/zydis::guru
+# dev-python/curl-cffi::tatsh-overlay
 dev-python/ptpython::guru
 dev-util/DirectXShaderCompiler::guru
 dev-util/zig-hash::yellow
@@ -61,6 +62,7 @@ media-gfx/vimiv-qt::guru
 media-libs/VulkanMemoryAllocator::guru
 media-plugins/gst-plugins-qt6::guru
 net-im/nheko::guru
+# net-misc/curl-impersonate::tatsh-overlay
 net-p2p/monero::guru
 net-vpn/mullvadvpn-app::guru
 sci-ml/ollama::guru
