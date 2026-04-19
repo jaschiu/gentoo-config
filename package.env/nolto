@@ -4,6 +4,7 @@
 # dev-qt/qtdeclarative nolto.conf
 # dev-qt/qtwebengine nolto.conf
 # dev-util/DirectXShaderCompiler nolto.conf
+app-antivirus/clamav nolto.conf
 app-benchmarks/hyperfine nolto.conf
 app-containers/aardvark-dns nolto.conf
 app-containers/netavark nolto.conf
@@ -13,8 +14,8 @@ app-misc/anki nolto.conf
 app-misc/jaq nolto.conf
 dev-util/bindgen nolto.conf
 dev-util/cargo-c nolto.conf
-dev-util/difftastic nolto.conf
 dev-util/dialog nolto.conf
+dev-util/difftastic nolto.conf
 dev-util/maturin nolto.conf
 dev-util/sccache nolto.conf
 dev-python/adblock nolto.conf

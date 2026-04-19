@@ -2,6 +2,7 @@ app-backup/restic nopolyhedra.conf
 app-containers/podman nopolyhedra.conf
 app-crypt/clevis nopolyhedra.conf
 app-misc/anki nopolyhedra.conf
+app-misc/jaq nopolyhedra.conf
 app-misc/mkcert nopolyhedra.conf
 app-shells/fzf nopolyhedra.conf
 app-text/typst nopolyhedra.conf
@@ -33,6 +34,7 @@ dev-python/uv nopolyhedra.conf
 dev-qt/qtcore nopolyhedra.conf
 dev-util/android-tools nopolyhedra.conf
 dev-util/cargo-c nopolyhedra.conf
+dev-util/difftastic nopolyhedra.conf
 dev-util/maturin nopolyhedra.conf
 dev-util/perf nopolyhedra.conf
 dev-util/sccache nopolyhedra.conf
@@ -66,6 +68,7 @@ sci-libs/openblas nopolyhedra.conf
 sci-ml/ollama nopolyhedra.conf
 sys-apps/flatpak nopolyhedra.conf
 sys-apps/kmod nopolyhedra.conf
+sys-apps/systemd-utils nopolyhedra.conf
 sys-auth/elogind nopolyhedra.conf
 sys-devel/gcc nopolyhedra.conf
 sys-libs/libnvme nopolyhedra.conf
