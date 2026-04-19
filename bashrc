@@ -112,13 +112,14 @@ if _has_feature no-lto; then
     _replace_common_flag 'Werror=odr'
     _replace_common_flag 'Werror=strict-aliasing'
     _replace_rust_flag 'lto(=\w+)?'
+    _replace_rust_flag 'codegen-units=1'
 fi
 
 if _has_feature parallel-lto; then
     if echo "$LDFLAGS" | grep -qw -- -fuse-ld=lld; then
         _add_ld_flag '-Wl,--lto-partitions=16'
     fi
-    _replace_rust_flag 'codegen-units=1'
+    _replace_rust_flag 'codegen-units=1' 'codegen-units=16'
     _replace_rust_flag 'lto(=\w+)?' 'lto=thin'
 fi
 
