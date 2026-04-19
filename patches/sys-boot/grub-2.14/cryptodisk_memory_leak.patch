@@ -1,0 +1,290 @@
+diff --git a/grub-core/disk/cryptodisk.c b/grub-core/disk/cryptodisk.c
+index 290821b..37dcc29 100644
+--- a/grub-core/disk/cryptodisk.c
++++ b/grub-core/disk/cryptodisk.c
+@@ -599,6 +599,10 @@ grub_cryptodisk_setcipher (grub_cryptodisk_t crypt, const char *ciphername, cons
+       goto err;
+     }
+ 
++  grub_crypto_cipher_close (crypt->cipher);
++  grub_crypto_cipher_close (crypt->secondary_cipher);
++  grub_crypto_cipher_close (crypt->essiv_cipher);
++
+   crypt->cipher = cipher;
+   crypt->benbi_log = benbi_log;
+   crypt->mode = mode;
+@@ -612,6 +616,7 @@ err:
+     {
+       grub_crypto_cipher_close (cipher);
+       grub_crypto_cipher_close (secondary_cipher);
++      grub_crypto_cipher_close (essiv_cipher);
+     }
+   return ret;
+ }
+@@ -1035,6 +1040,7 @@ cryptodisk_close (grub_cryptodisk_t dev)
+   grub_crypto_cipher_close (dev->cipher);
+   grub_crypto_cipher_close (dev->secondary_cipher);
+   grub_crypto_cipher_close (dev->essiv_cipher);
++  grub_free (dev->lrw_precalc);
+   grub_free (dev);
+ }
+ 
+@@ -1175,6 +1181,19 @@ grub_cryptodisk_scan_device_real (const char *name,
+ 	      cargs->key_data = NULL;
+ 	      cargs->key_len = 0;
+ 
++	      /*
++	       * Free cipher handles so the large Argon2 free region can
++	       * coalesce before the next attempt.
++	       */
++	      grub_crypto_cipher_close (dev->cipher);
++	      dev->cipher = NULL;
++	      grub_crypto_cipher_close (dev->secondary_cipher);
++	      dev->secondary_cipher = NULL;
++	      grub_crypto_cipher_close (dev->essiv_cipher);
++	      dev->essiv_cipher = NULL;
++	      grub_free (dev->lrw_precalc);
++	      dev->lrw_precalc = NULL;
++
+ 	      part = grub_partition_get_name (source->partition);
+ 	      grub_dprintf ("cryptodisk",
+ 			    "recovered a key from key protector %s but it "
+@@ -1278,6 +1297,21 @@ grub_cryptodisk_scan_device_real (const char *name,
+ 	    goto error;
+ 	  grub_puts_ (N_("Invalid passphrase."));
+ 
++	  /*
++	   * Free cipher handles so the large Argon2 free region can
++	   * coalesce. Without this, these small allocations sit in the
++	   * middle of the freed Argon2 block and prevent reuse, forcing
++	   * another multi-GB heap growth on retry.
++	   */
++	  grub_crypto_cipher_close (dev->cipher);
++	  dev->cipher = NULL;
++	  grub_crypto_cipher_close (dev->secondary_cipher);
++	  dev->secondary_cipher = NULL;
++	  grub_crypto_cipher_close (dev->essiv_cipher);
++	  dev->essiv_cipher = NULL;
++	  grub_free (dev->lrw_precalc);
++	  dev->lrw_precalc = NULL;
++
+ 	  /*
+ 	   * Since recover_key() calls a function that returns grub_errno,
+ 	   * a leftover error value from a previously rejected passphrase
+diff --git a/grub-core/disk/luks2.c b/grub-core/disk/luks2.c
+index a3608e2..b9b96f1 100644
+--- a/grub-core/disk/luks2.c
++++ b/grub-core/disk/luks2.c
+@@ -130,6 +130,79 @@ gcry_err_code_t AF_merge (const gcry_md_spec_t * hash, grub_uint8_t * src,
+ 			  grub_uint8_t * dst, grub_size_t blocksize,
+ 			  grub_size_t blocknumbers);
+ 
++/*
++ * Duplicate all string pointers in the keyslot, digest, and segment structs
++ * so that json_header can be freed before the large Argon2 allocation.
++ * Returns GRUB_ERR_NONE on success, error otherwise.  On error, no
++ * partial allocations are left behind and the struct pointers still
++ * reference the original json_header buffer.
++ */
++static grub_err_t
++luks2_strdup_fields (grub_luks2_keyslot_t *k, grub_luks2_digest_t *d,
++		     grub_luks2_segment_t *s)
++{
++  char *k_ae = NULL, *k_afh = NULL, *k_salt = NULL, *k_pbh = NULL;
++  char *d_salt = NULL, *d_dig = NULL, *d_hash = NULL;
++  char *s_size = NULL, *s_enc = NULL;
++
++  k_ae   = grub_strdup (k->area.encryption);
++  k_afh  = grub_strdup (k->af.hash);
++  k_salt = grub_strdup (k->kdf.salt);
++  if (k->kdf.type == LUKS2_KDF_TYPE_PBKDF2)
++    k_pbh = grub_strdup (k->kdf.u.pbkdf2.hash);
++  d_salt = grub_strdup (d->salt);
++  d_dig  = grub_strdup (d->digest);
++  d_hash = grub_strdup (d->hash);
++  s_size = grub_strdup (s->size);
++  s_enc  = grub_strdup (s->encryption);
++
++  if (!k_ae || !k_afh || !k_salt || !d_salt || !d_dig || !d_hash
++      || !s_size || !s_enc
++      || (k->kdf.type == LUKS2_KDF_TYPE_PBKDF2 && !k_pbh))
++    {
++      grub_free (k_ae);
++      grub_free (k_afh);
++      grub_free (k_salt);
++      grub_free (k_pbh);
++      grub_free (d_salt);
++      grub_free (d_dig);
++      grub_free (d_hash);
++      grub_free (s_size);
++      grub_free (s_enc);
++      return grub_error (GRUB_ERR_OUT_OF_MEMORY,
++			 "out of memory duplicating LUKS2 metadata");
++    }
++
++  k->area.encryption = k_ae;
++  k->af.hash         = k_afh;
++  k->kdf.salt        = k_salt;
++  if (k->kdf.type == LUKS2_KDF_TYPE_PBKDF2)
++    k->kdf.u.pbkdf2.hash = k_pbh;
++  d->salt   = d_salt;
++  d->digest = d_dig;
++  d->hash   = d_hash;
++  s->size       = s_size;
++  s->encryption = s_enc;
++
++  return GRUB_ERR_NONE;
++}
++
++static void
++luks2_free_fields (grub_luks2_keyslot_t *k, grub_luks2_digest_t *d,
++		   grub_luks2_segment_t *s)
++{
++  grub_free ((void *) k->area.encryption);
++  grub_free ((void *) k->af.hash);
++  grub_free ((void *) k->kdf.salt);
++  if (k->kdf.type == LUKS2_KDF_TYPE_PBKDF2)
++    grub_free ((void *) k->kdf.u.pbkdf2.hash);
++  grub_free ((void *) d->salt);
++  grub_free ((void *) d->digest);
++  grub_free ((void *) d->hash);
++  grub_free ((void *) s->size);
++  grub_free ((void *) s->encryption);
++}
++
+ static grub_err_t
+ luks2_parse_keyslot (grub_luks2_keyslot_t *out, const grub_json_t *keyslot)
+ {
+@@ -521,12 +594,15 @@ luks2_decrypt_key (grub_uint8_t *out_key,
+   grub_strncpy (cipher, k->area.encryption, sizeof (cipher));
+   p = grub_memchr (cipher, '-', grub_strlen (cipher));
+   if (!p)
+-      return grub_error (GRUB_ERR_BAD_ARGUMENT, "Invalid encryption");
++    {
++      ret = grub_error (GRUB_ERR_BAD_ARGUMENT, "Invalid encryption");
++      goto err;
++    }
+   *p = '\0';
+ 
+   ret = grub_cryptodisk_setcipher (crypt, cipher, p + 1);
+   if (ret)
+-      return ret;
++      goto err;
+ 
+   gcry_ret = grub_cryptodisk_setkey (crypt, area_key, k->area.key_size);
+   if (gcry_ret)
+@@ -594,6 +670,7 @@ luks2_recover_key (grub_disk_t source,
+ {
+   grub_uint8_t candidate_key[GRUB_CRYPTODISK_MAX_KEYLEN];
+   char cipher[32], *json_header = NULL, *ptr;
++  int fields_allocated = 0;
+   grub_size_t candidate_key_len = 0, json_idx, size;
+   grub_luks2_header_t header;
+   grub_luks2_keyslot_t keyslot;
+@@ -659,6 +736,32 @@ luks2_recover_key (grub_disk_t source,
+       char indexstr[21]; /* log10(2^64) ~ 20, plus NUL character. */
+       typeof (source->total_sectors) max_crypt_sectors = 0;
+ 
++      /* Re-read the JSON header if it was freed to make room for Argon2. */
++      if (!json_header)
++	{
++	  json_header = grub_zalloc (sz);
++	  if (!json_header)
++	    {
++	      ret = GRUB_ERR_OUT_OF_MEMORY;
++	      goto err;
++	    }
++
++	  ret = grub_disk_read (source, 0,
++				grub_be_to_cpu64 (header.hdr_offset) + sizeof (header),
++				grub_be_to_cpu64 (header.hdr_size) - sizeof (header),
++				json_header);
++	  if (ret)
++	    goto err;
++
++	  ret = grub_json_parse (&json, json_header,
++				 grub_be_to_cpu64 (header.hdr_size));
++	  if (ret)
++	    {
++	      ret = grub_error (GRUB_ERR_BAD_ARGUMENT, "Invalid LUKS2 JSON header");
++	      goto err;
++	    }
++	}
++
+       grub_errno = GRUB_ERR_NONE;
+       ret = luks2_get_keyslot (&keyslot, &digest, &segment, json, json_idx);
+       if (ret)
+@@ -768,12 +871,30 @@ luks2_recover_key (grub_disk_t source,
+ 	  crypt->total_sectors = max_crypt_sectors - crypt->offset_sectors;
+ 	}
+ 
++      /*
++       * Free the large json_header (~16MB) before luks2_decrypt_key runs
++       * Argon2, which needs a huge contiguous allocation.  Without this,
++       * json_header fragments the free region left by a previous Argon2
++       * run, forcing another multi-GB EFI allocation on retry.
++       */
++      ret = luks2_strdup_fields (&keyslot, &digest, &segment);
++      if (ret)
++	goto err;
++      fields_allocated = 1;
++
++      grub_free (json_header);
++      json_header = NULL;
++      grub_json_free (json);
++      json = NULL;
++
+       ret = luks2_decrypt_key (candidate_key, source, crypt, &keyslot,
+ 			       cargs->key_data, cargs->key_len);
+       if (ret)
+ 	{
+ 	  grub_dprintf ("luks2", "Decryption with keyslot \"%" PRIuGRUB_UINT64_T "\" failed: %s\n",
+ 			keyslot.idx, grub_errmsg);
++	  luks2_free_fields (&keyslot, &digest, &segment);
++	  fields_allocated = 0;
+ 	  continue;
+ 	}
+ 
+@@ -782,6 +903,8 @@ luks2_recover_key (grub_disk_t source,
+ 	{
+ 	  grub_dprintf ("luks2", "Could not open keyslot \"%" PRIuGRUB_UINT64_T "\": %s\n",
+ 			keyslot.idx, grub_errmsg);
++	  luks2_free_fields (&keyslot, &digest, &segment);
++	  fields_allocated = 0;
+ 	  continue;
+ 	}
+ 
+@@ -805,7 +928,10 @@ luks2_recover_key (grub_disk_t source,
+   grub_strncpy (cipher, segment.encryption, sizeof (cipher));
+   ptr = grub_memchr (cipher, '-', grub_strlen (cipher));
+   if (!ptr)
+-      return grub_error (GRUB_ERR_BAD_ARGUMENT, "Invalid encryption");
++    {
++      ret = grub_error (GRUB_ERR_BAD_ARGUMENT, "Invalid encryption");
++      goto err;
++    }
+   *ptr = '\0';
+ 
+   ret = grub_cryptodisk_setcipher (crypt, cipher, ptr + 1);
+@@ -821,6 +947,8 @@ luks2_recover_key (grub_disk_t source,
+     }
+ 
+  err:
++  if (fields_allocated)
++    luks2_free_fields (&keyslot, &digest, &segment);
+   grub_free (json_header);
+   grub_json_free (json);
+   return ret;
+diff --git a/grub-core/lib/x86_64/efi/hwfeatures-gcry.c b/grub-core/lib/x86_64/efi/hwfeatures-gcry.c
+index 8e26c01..8aa0b48 100644
+--- a/grub-core/lib/x86_64/efi/hwfeatures-gcry.c
++++ b/grub-core/lib/x86_64/efi/hwfeatures-gcry.c
+@@ -57,7 +57,7 @@ read_cr4 (void)
+ static void
+ write_cr0 (grub_uint64_t val)
+ {
+-  asm volatile ("mov %0,%%cr4": "+r" (val) : : "memory");
++  asm volatile ("mov %0,%%cr0": "+r" (val) : : "memory");
+ }
+ 
+ static void
