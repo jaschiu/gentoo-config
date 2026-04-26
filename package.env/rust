@@ -30,7 +30,7 @@ llvm-runtimes/compiler-rt-sanitizers lld-build.conf
 media-libs/mesa lld-build.conf sccache.conf
 sys-apps/amdgpu_top lld-build.conf sccache.conf
 sys-apps/bat lld-build.conf sccache.conf
-sys-apps/fd lld-build.conf
+sys-apps/fd lld-build.conf sccache.conf
 sys-apps/lsd lld-build.conf sccache.conf
 sys-apps/ripgrep lld-build.conf sccache.conf
 www-client/firefox lld-build.conf sccache.conf
