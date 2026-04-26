@@ -1,4 +1,4 @@
 <dev-libs/icu-78.2 ~amd64
-<dev-libs/nss-3.122 ~amd64
+<dev-libs/nss-3.123 ~amd64
 <dev-libs/nspr-4.39 ~amd64
 www-client/librewolf ~amd64

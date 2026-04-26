@@ -3,3 +3,5 @@
 
 dev-lang/rust-bin LLVM_SLOT: -* 21
 dev-util/spirv-llvm-translator:21 LLVM_SLOT: -* 21
+www-client/firefox LLVM_SLOT: -20 21
+www-client/librewolf LLVM_SLOT: -20 21

@@ -1,0 +1,31 @@
+--- a/gfx/gl/Colorspaces.h
++++ b/gfx/gl/Colorspaces.h
+@@ -92,7 +92,7 @@
+     return PiecewiseGammaDesc{
+         .a = 1.099,
+         .b = 0.018,
+-        .g = 1.0 / 0.45,  // ~2.222
++        .g = 1.0f / 0.45f,  // ~2.222
+         .k = 4.5,
+     };
+   }
+@@ -101,7 +101,7 @@
+     return PiecewiseGammaDesc{
+         .a = 1.0993,
+         .b = 0.0181,
+-        .g = 1.0 / 0.45,  // ~2.222
++        .g = 1.0f / 0.45f,  // ~2.222
+         .k = 4.5,
+     };
+   }
+@@ -123,8 +123,8 @@
+     return YcbcrDesc{
+         .y0 = 0 / 255.0,
+         .y1 = 255 / 255.0,
+-        .u0 = 128 / 255.0,
+-        .uPlusHalf = 254 / 255.0,
++        .u0 = static_cast<float>(128 / 255.0),
++        .uPlusHalf = static_cast<float>(254 / 255.0),
+     };
+   }
+   static constexpr auto Float() {  // Best for a LUT
