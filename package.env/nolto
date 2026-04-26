@@ -35,6 +35,7 @@ media-libs/mesa nolto.conf
 sci-libs/flexiblas nolto.conf
 sci-libs/openblas nolto.conf
 sys-apps/amdgpu_top nolto.conf
+sys-apps/bat nolto.conf
 sys-apps/fd nolto.conf
 sys-apps/lsd nolto.conf
 sys-apps/ripgrep nolto.conf

@@ -1,3 +1,4 @@
+app-arch/zstd nopolyhedra.conf
 app-backup/restic nopolyhedra.conf
 app-containers/podman nopolyhedra.conf
 app-crypt/clevis nopolyhedra.conf
@@ -21,6 +22,7 @@ dev-libs/libgcrypt nopolyhedra.conf
 dev-libs/libgusb nopolyhedra.conf
 dev-libs/libinput nopolyhedra.conf
 dev-libs/libsodium nopolyhedra.conf
+dev-libs/libxml2 nopolyhedra.conf
 dev-libs/nettle nopolyhedra.conf
 dev-libs/nspr nopolyhedra.conf
 dev-libs/openssl nopolyhedra.conf
@@ -51,6 +53,7 @@ media-libs/gst-plugins-bad nopolyhedra.conf
 media-libs/gst-plugins-base nopolyhedra.conf
 media-libs/gst-plugins-good nopolyhedra.conf
 media-libs/gst-plugins-ugly nopolyhedra.conf
+media-libs/libplacebo nopolyhedra.conf
 media-libs/libv4l nopolyhedra.conf
 media-libs/libvpx nopolyhedra.conf
 media-libs/mesa nopolyhedra.conf
@@ -66,6 +69,7 @@ net-misc/curl-impersonate nopolyhedra.conf
 net-p2p/monero nopolyhedra.conf
 sci-libs/openblas nopolyhedra.conf
 sci-ml/ollama nopolyhedra.conf
+sys-apps/bat nopolyhedra.conf
 sys-apps/flatpak nopolyhedra.conf
 sys-apps/kmod nopolyhedra.conf
 sys-apps/systemd-utils nopolyhedra.conf
@@ -73,12 +77,14 @@ sys-auth/elogind nopolyhedra.conf
 sys-devel/gcc nopolyhedra.conf
 sys-libs/libnvme nopolyhedra.conf
 sys-libs/libunwind nopolyhedra.conf
+sys-libs/ncurses nopolyhedra.conf
 www-client/firefox nopolyhedra.conf
 www-client/librewolf nopolyhedra.conf
 x11-base/xorg-proto nopolyhedra.conf
 x11-base/xwayland nopolyhedra.conf
 x11-libs/gtk+ nopolyhedra.conf
 x11-libs/libdrm nopolyhedra.conf
+x11-libs/libpciaccess nopolyhedra.conf
 x11-libs/libxkbcommon nopolyhedra.conf
 x11-libs/pixman nopolyhedra.conf
 x11-terms/kitty nopolyhedra.conf
