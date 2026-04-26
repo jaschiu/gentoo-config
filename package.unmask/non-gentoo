@@ -67,7 +67,7 @@ net-p2p/monero::guru
 net-vpn/mullvadvpn-app::guru
 sci-ml/ollama::guru
 sec-keys/openpgp-keys-brave-browser-release::another-brave-overlay
-sys-auth/hyprpolkitagent::guru
+sys-auth/hyprpolkitagent::hyproverlay
 sys-boot/ventoy-bin::gentoo-zh
 www-client/brave-browser::another-brave-overlay
 www-client/librewolf::librewolf
