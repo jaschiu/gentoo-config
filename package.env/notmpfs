@@ -1,4 +1,4 @@
 # www-client/cromite notmpfs.conf
 # www-client/firefox notmpfs.conf
 # www-client/librewolf notmpfs.conf
-llvm-core/clang notmpfs.conf
+# llvm-core/clang notmpfs.conf
