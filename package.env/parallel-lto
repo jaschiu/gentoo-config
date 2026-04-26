@@ -2,6 +2,7 @@ app-office/libreoffice parallel-lto.conf
 dev-lang/nim parallel-lto.conf
 dev-python/pyqt5 parallel-lto.conf
 dev-python/pyqt6 parallel-lto.conf
+dev-python/uv parallel-lto.conf
 # dev-qt/qtwebengine parallel-lto.conf
 dev-util/DirectXShaderCompiler parallel-lto.conf
 games-emulation/eden parallel-lto.conf
