@@ -2,3 +2,4 @@
 */* LLVM_TARGETS: -* DirectX SPIRV
 
 dev-lang/rust-bin LLVM_SLOT: -* 21
+dev-util/spirv-llvm-translator:21 LLVM_SLOT: -* 21
